@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Welcome to Bellybee</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
@@ -52,6 +53,26 @@
             font-size: 1.3rem;
         }
 
+        @media (max-width: 768px) {
+            .main-title {
+                font-size: 2.2rem;
+            }
+
+            .sub-title {
+                font-size: 1rem;
+            }
+
+            .btn-outline-light {
+                display: block;
+                width: 80%;
+                margin: 10px auto;
+            }
+
+            body {
+                padding: 1rem;
+                text-align: center;
+            }
+        }
     </style>
 </head>
 <body>
