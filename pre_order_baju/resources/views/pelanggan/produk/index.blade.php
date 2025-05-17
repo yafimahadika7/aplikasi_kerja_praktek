@@ -109,6 +109,7 @@
 
         .card-body {
             padding: 10px;
+            color: black;
         }
 
         .search-bar {
@@ -122,9 +123,11 @@
         }
 
         .btn-group-custom .btn {
-            width: 48%;
+            width: 50%;
             font-size: 0.8rem;
             padding: 0.25rem 0.5rem;
+            color: black !important;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -137,9 +140,9 @@
             <input type="text" name="search" class="form-control me-2" placeholder="Search product, trend, or brand..." value="{{ request('search') }}">
             <button class="btn btn-dark" type="submit"><i class="bi bi-search"></i></button>
         </form>
-        <div>
+        <a href="{{ route('keranjang.index') }}" class="text-white text-decoration-none">
             <i class="bi bi-bag fs-5"></i>
-        </div>
+        </a>
     </div>
 
     <div class="container py-4">
@@ -180,7 +183,14 @@
                                 <p class="fw-bold">Rp{{ number_format($item->harga, 0, ',', '.') }}</p>
                                 <div class="d-flex justify-content-between btn-group-custom">
                                     <a href="#" class="btn btn-primary">Beli</a>
-                                    <a href="#" class="btn btn-outline-secondary">Keranjang</a>
+                                    <button class="btn btn-outline-light btn-keranjang" 
+                                        data-produk='{{ json_encode([
+                                            "id" => $item->id,
+                                            "nama" => $item->nama,
+                                            "kategori" => $item->kategori,
+                                            "deskripsi" => $item->deskripsi,
+                                            "gambar" => asset("storage/" . $item->gambar)
+                                        ]) }}'>Keranjang</button>
                                 </div>
                             </div>
                         </div>
@@ -193,5 +203,92 @@
             @endif
         </div>
     </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="cartModal" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cartModalLabel">Tambah ke Keranjang</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body d-flex flex-column flex-md-row align-items-start">
+                    <img id="modalImage" src="" class="img-fluid me-md-4 mb-3 mb-md-0" style="max-width: 300px;">
+                    <div class="flex-grow-1">
+                        <h5 id="modalNama" class="text-dark fw-bold"></h5>
+                        <p id="modalKategori" class="text-dark mb-1"></p>
+                        <p id="modalDeskripsi" class="text-dark small"></p>
+                        <div class="mb-3">
+                            <label for="ukuran" class="form-label text-dark">Pilih Ukuran</label>
+                            <select class="form-select" id="ukuran">
+                                <option>S</option>
+                                <option>M</option>
+                                <option>L</option>
+                                <option>XL</option>
+                                <option>All Size</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="jumlah" class="form-label text-dark">Jumlah</label>
+                            <input type="number" class="form-control" id="jumlah" min="1" value="1">
+                        </div>
+                        <button class="btn btn-primary" id="btnTambahKeranjang">Tambah ke Keranjang</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentProdukId = null;
+
+        document.querySelectorAll('.btn-keranjang').forEach(button => {
+            button.addEventListener('click', function () {
+                const product = JSON.parse(this.getAttribute('data-produk'));
+                currentProdukId = product.id;
+                document.getElementById('modalNama').innerText = product.nama;
+                document.getElementById('modalKategori').innerText = product.kategori;
+                document.getElementById('modalDeskripsi').innerText = product.deskripsi || '-';
+                document.getElementById('modalImage').src = product.gambar;
+                new bootstrap.Modal(document.getElementById('cartModal')).show();
+            });
+        });
+
+        document.getElementById('btnTambahKeranjang').addEventListener('click', function () {
+            const ukuran = document.getElementById('ukuran').value;
+            const jumlah = document.getElementById('jumlah').value;
+
+            fetch("{{ route('keranjang.store') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ produk_id: currentProdukId, ukuran, jumlah })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const toastEl = document.getElementById('toastSuccess');
+                    const toast = new bootstrap.Toast(toastEl);
+                    toast.show();
+                    bootstrap.Modal.getInstance(document.getElementById('cartModal')).hide();
+                }
+            });
+        });
+    </script>
+
+    <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 9999">
+    <div id="toastSuccess" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="3000" data-bs-autohide="true">
+        <div class="d-flex">
+        <div class="toast-body">
+            Produk berhasil ditambahkan ke keranjang.
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+    </div>
+
 </body>
 </html>
