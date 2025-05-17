@@ -89,11 +89,25 @@
                 {{ ucfirst(Auth::user()->role) }}
             </small>
         </div>
-        <a href="#">📊 Dashboard</a>
-        <a href="#">💳 Transaksi</a>
-        <a href="#">🛍️ Produk</a>
-        <a href="{{ route('admin.users.index') }}">👤 User</a>
-        <a href="#">📈 Penjualan</a>
+        @if (Auth::user()->role === 'admin' || Auth::user()->role === 'operation' || Auth::user()->role === 'finance' || Auth::user()->role === 'produk')
+            <a href="#">📊 Dashboard</a>
+        @endif
+
+        @if (Auth::user()->role === 'admin' || Auth::user()->role === 'operation')
+            <a href="#">💳 Transaksi</a>
+        @endif
+
+        @if (Auth::user()->role === 'admin' || Auth::user()->role === 'produk')
+            <a href="{{ route('admin.produk.index') }}">🛍️ Produk</a>
+        @endif
+
+        @if (Auth::user()->role === 'admin')
+            <a href="{{ route('admin.users.index') }}">👤 User</a>
+        @endif
+
+        @if (Auth::user()->role === 'admin' || Auth::user()->role === 'finance')
+            <a href="#">📈 Penjualan</a>
+        @endif
         <form method="POST" action="{{ route('logout') }}">
             @csrf
             <button type="submit">🚪 Logout</button>

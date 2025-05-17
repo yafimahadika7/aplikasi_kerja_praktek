@@ -99,7 +99,7 @@
         @endif
 
         @if (Auth::user()->role === 'admin' || Auth::user()->role === 'produk')
-            <a href="#">🛍️ Produk</a>
+            <a href="{{ route('admin.produk.index') }}">🛍️ Produk</a>
         @endif
 
         @if (Auth::user()->role === 'admin')
