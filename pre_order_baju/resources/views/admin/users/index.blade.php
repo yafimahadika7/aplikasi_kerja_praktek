@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard Admin</title>
+    <title>Manajemen User</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
@@ -66,7 +66,6 @@
             border: none;
             cursor: pointer;
         }
-
         @media (max-width: 768px) {
             .sidebar {
                 left: -220px;
@@ -82,7 +81,7 @@
 </head>
 <body>
 
-    <!-- Sidebar -->    
+    <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="text-center mb-3">
             <strong>{{ Auth::user()->name }}</strong><br>
@@ -90,26 +89,11 @@
                 {{ ucfirst(Auth::user()->role) }}
             </small>
         </div>
-        @if (Auth::user()->role === 'admin' || Auth::user()->role === 'operation' || Auth::user()->role === 'finance' || Auth::user()->role === 'produk')
-            <a href="#">📊 Dashboard</a>
-        @endif
-
-        @if (Auth::user()->role === 'admin' || Auth::user()->role === 'operation')
-            <a href="#">💳 Transaksi</a>
-        @endif
-
-        @if (Auth::user()->role === 'admin' || Auth::user()->role === 'produk')
-            <a href="#">🛍️ Produk</a>
-        @endif
-
-        @if (Auth::user()->role === 'admin')
-            <a href="{{ route('admin.users.index') }}">👤 User</a>
-        @endif
-
-        @if (Auth::user()->role === 'admin' || Auth::user()->role === 'finance')
-            <a href="#">📈 Penjualan</a>
-        @endif
-
+        <a href="#">📊 Dashboard</a>
+        <a href="#">💳 Transaksi</a>
+        <a href="#">🛍️ Produk</a>
+        <a href="{{ route('admin.users.index') }}">👤 User</a>
+        <a href="#">📈 Penjualan</a>
         <form method="POST" action="{{ route('logout') }}">
             @csrf
             <button type="submit">🚪 Logout</button>
@@ -119,13 +103,55 @@
     <!-- Topbar -->
     <div class="topbar" id="topbar">
         <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
-        <span>Selamat Datang, {{ Auth::user()->name }}</span>
+        <span>Manajemen User</span>
     </div>
 
     <!-- Content -->
     <div class="content" id="main-content">
-        <h2>Dashboard Admin</h2>
-        <p>Ini adalah halaman utama admin. Gunakan sidebar untuk navigasi antar fitur.</p>
+        <h4>Daftar User</h4>
+
+        <div class="d-flex justify-content-between mb-3">
+            <a href="{{ route('admin.users.create') }}" class="btn btn-primary">+ Tambah User</a>
+
+            <form action="{{ route('admin.users.index') }}" method="GET" class="d-flex">
+                <input type="text" name="search" class="form-control me-2" placeholder="Cari nama/email..." value="{{ request('search') }}">
+                <button class="btn btn-outline-secondary" type="submit">Cari</button>
+            </form>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped bg-white">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Nama</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th width="200">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($users as $user)
+                        <tr>
+                            <td>{{ $user->name }}</td>
+                            <td>{{ $user->email }}</td>
+                            <td>{{ ucfirst($user->role) }}</td>
+                            <td>
+                                <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-sm btn-warning">Edit</a>
+                                <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" class="d-inline">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="btn btn-sm btn-danger" onclick="return confirm('Yakin hapus user ini?')">Hapus</button>
+                                </form>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="4" class="text-center">Belum ada user</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <!-- JavaScript -->
