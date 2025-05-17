@@ -125,7 +125,6 @@
     <!-- Content -->
     <div class="content" id="main-content">
         <h2>Dashboard Admin</h2>
-        <p>Ini adalah halaman utama admin. Gunakan sidebar untuk navigasi antar fitur.</p>
     </div>
 
     <!-- JavaScript -->
