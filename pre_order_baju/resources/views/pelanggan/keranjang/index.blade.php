@@ -258,12 +258,10 @@
 
         items.forEach((item, index) => {
             const subtotal = item.harga * item.jumlah;
-            total += subtotal;
-
             const el = document.createElement('div');
             el.className = 'produk-card text-dark';
             el.innerHTML = `
-                <input type="checkbox" class="form-check-input me-2 item-checkbox" checked data-index="${index}" data-subtotal="${subtotal}">
+                <input type="checkbox" class="form-check-input me-2 item-checkbox" checked data-index="${index}">
                 <img src="${item.gambar}" alt="${item.nama}" class="produk-img">
                 <div class="produk-info">
                     <strong>${item.nama}</strong><br>
@@ -281,6 +279,54 @@
             keranjangList.appendChild(el);
         });
 
+        updateTotal();
+
+        // Re-attach event handlers
+        document.querySelectorAll('.btn-delete').forEach(btn => {
+            btn.addEventListener('click', e => {
+                const index = parseInt(e.target.getAttribute('data-index'));
+                items.splice(index, 1);
+                localStorage.setItem('keranjang', JSON.stringify(items));
+                renderKeranjang();
+            });
+        });
+
+        document.querySelectorAll('.btn-plus').forEach(btn => {
+            btn.addEventListener('click', e => {
+                const index = parseInt(e.target.getAttribute('data-index'));
+                items[index].jumlah++;
+                localStorage.setItem('keranjang', JSON.stringify(items));
+                renderKeranjang();
+            });
+        });
+
+        document.querySelectorAll('.btn-minus').forEach(btn => {
+            btn.addEventListener('click', e => {
+                const index = parseInt(e.target.getAttribute('data-index'));
+                if (items[index].jumlah > 1) {
+                    items[index].jumlah--;
+                    localStorage.setItem('keranjang', JSON.stringify(items));
+                    renderKeranjang();
+                }
+            });
+        });
+
+        document.querySelectorAll('.item-checkbox').forEach(cb => {
+            cb.addEventListener('change', () => {
+                updateTotal();
+            });
+        });
+    }
+
+    function updateTotal() {
+        const items = JSON.parse(localStorage.getItem('keranjang')) || [];
+        let total = 0;
+        document.querySelectorAll('.item-checkbox').forEach(cb => {
+            if (cb.checked) {
+                const index = parseInt(cb.getAttribute('data-index'));
+                total += items[index].harga * items[index].jumlah;
+            }
+        });
         totalHarga.textContent = 'Rp' + total.toLocaleString('id-ID');
     }
 
