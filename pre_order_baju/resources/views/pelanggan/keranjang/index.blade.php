@@ -5,6 +5,7 @@
     <title>Keranjang Belanja</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         body {
             position: relative;
@@ -16,7 +17,7 @@
             min-height: 100vh;
             padding-top: 100px;
             opacity: 0;
-            animation: fadeInBody 0.8s ease forwards;
+            animation: fadeInBody 1s ease forwards;
         }
 
         @keyframes fadeInBody {
@@ -39,18 +40,12 @@
             display: flex;
             align-items: center;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            animation: slideInUp 0.5s ease;
+            animation: fadeInUp 0.6s ease both;
         }
 
-        @keyframes slideInUp {
-            from {
-                transform: translateY(40px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .produk-img {
@@ -94,12 +89,6 @@
             align-items: center;
             justify-content: center;
             padding: 1rem;
-            animation: fadeInDown 0.7s ease;
-        }
-
-        @keyframes fadeInDown {
-            from { transform: translateY(-20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
         }
 
         .back-button {
@@ -117,12 +106,10 @@
             align-items: center;
             gap: 0.5rem;
             text-decoration: none;
-            transition: background-color 0.3s ease, transform 0.3s ease;
         }
 
         .back-button:hover {
-            background-color: rgba(255, 255, 255, 0.25);
-            transform: translateY(-50%) scale(1.05);
+            background-color: rgba(255, 255, 255, 0.2);
         }
 
         .main-title {
@@ -130,6 +117,51 @@
             font-weight: bold;
             color: white;
             margin: 0;
+        }
+
+        .modal-content {
+            color: black;
+            background-color: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            border-radius: 10px;
+        }
+
+        .alert-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1050;
+        }
+
+        .custom-alert {
+            background-color: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 1rem;
+            color: black;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+
+        .result-alert {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            color: black;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+            z-index: 1100;
+            text-align: center;
+            display: none;
         }
     </style>
 </head>
@@ -147,12 +179,70 @@
 
 <div class="total-bar text-dark">
     <div>Total: <span id="totalHarga">Rp0</span></div>
-    <button class="btn btn-success">Beli</button>
+    <button class="btn btn-success" id="btnBeli">Beli</button>
 </div>
 
+<!-- Modal Checkout -->
+<div class="modal fade" id="checkoutModal" tabindex="-1" aria-labelledby="checkoutModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="checkoutModalLabel">Isi Data Diri</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="checkoutForm">
+          <div class="mb-3">
+            <label class="form-label">Nama Lengkap</label>
+            <input type="text" class="form-control" name="nama" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Nomor Telepon</label>
+            <input type="tel" class="form-control" name="telepon" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control" name="email" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Alamat</label>
+            <textarea class="form-control" name="alamat" required></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Metode Pembayaran</label>
+            <select class="form-select" name="metode_pembayaran" required>
+              <option value="BCA">Virtual Account BCA</option>
+              <option value="MANDIRI">Virtual Account Mandiri</option>
+              <option value="BNI">Virtual Account BNI</option>
+              <option value="BRI">Virtual Account BRI</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Beli Sekarang</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="customAlert" class="alert-overlay d-none">
+    <div class="custom-alert">Keranjang Anda kosong. Silakan pilih produk terlebih dahulu.</div>
+</div>
+
+<div id="resultAlert" class="result-alert"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     const keranjangList = document.getElementById('keranjangList');
     const totalHarga = document.getElementById('totalHarga');
+    const customAlert = document.getElementById('customAlert');
+    const btnBeli = document.getElementById('btnBeli');
+
+    function showAlert() {
+        customAlert.classList.remove('d-none');
+        setTimeout(() => {
+            customAlert.classList.add('d-none');
+        }, 3000);
+    }
 
     function renderKeranjang() {
         const items = JSON.parse(localStorage.getItem('keranjang')) || [];
@@ -192,48 +282,58 @@
         });
 
         totalHarga.textContent = 'Rp' + total.toLocaleString('id-ID');
-
-        document.querySelectorAll('.btn-delete').forEach(btn => {
-            btn.addEventListener('click', e => {
-                const index = parseInt(e.target.getAttribute('data-index'));
-                items.splice(index, 1);
-                localStorage.setItem('keranjang', JSON.stringify(items));
-                renderKeranjang();
-            });
-        });
-
-        document.querySelectorAll('.btn-plus').forEach(btn => {
-            btn.addEventListener('click', e => {
-                const index = parseInt(e.target.getAttribute('data-index'));
-                items[index].jumlah++;
-                localStorage.setItem('keranjang', JSON.stringify(items));
-                renderKeranjang();
-            });
-        });
-
-        document.querySelectorAll('.btn-minus').forEach(btn => {
-            btn.addEventListener('click', e => {
-                const index = parseInt(e.target.getAttribute('data-index'));
-                if (items[index].jumlah > 1) {
-                    items[index].jumlah--;
-                    localStorage.setItem('keranjang', JSON.stringify(items));
-                    renderKeranjang();
-                }
-            });
-        });
-
-        document.querySelectorAll('.item-checkbox').forEach(cb => {
-            cb.addEventListener('change', () => {
-                let sum = 0;
-                document.querySelectorAll('.item-checkbox:checked').forEach(c => {
-                    sum += parseInt(c.getAttribute('data-subtotal'));
-                });
-                totalHarga.textContent = 'Rp' + sum.toLocaleString('id-ID');
-            });
-        });
     }
 
     document.addEventListener('DOMContentLoaded', renderKeranjang);
+
+    btnBeli.addEventListener('click', () => {
+        const items = JSON.parse(localStorage.getItem('keranjang')) || [];
+        if (items.length === 0) {
+            showAlert();
+        } else {
+            const modal = new bootstrap.Modal(document.getElementById('checkoutModal'));
+            modal.show();
+        }
+    });
+
+    document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => data[key] = value);
+
+        const items = JSON.parse(localStorage.getItem('keranjang')) || [];
+        const total = items.reduce((sum, item) => sum + item.harga * item.jumlah, 0);
+
+        data.items = items;
+        data.total = total;
+
+        fetch("/transaksi", {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            const alertBox = document.getElementById('resultAlert');
+            alertBox.innerHTML = `
+                <h5 class="text-success">Transaksi berhasil!</h5>
+                <p>VA: ${result.va_number}</p>
+                <p>Expired: ${result.expired_at}</p>
+                <button class="btn btn-sm btn-primary mt-2" onclick="window.location.href='/keranjang'">OK</button>
+            `;
+            alertBox.style.display = 'block';
+            localStorage.removeItem('keranjang');
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            alert("Terjadi kesalahan saat memproses transaksi.");
+        });
+    });
 </script>
 </body>
 </html>

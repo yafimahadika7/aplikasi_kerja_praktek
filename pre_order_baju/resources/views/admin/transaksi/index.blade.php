@@ -117,87 +117,69 @@
     <!-- Topbar -->
     <div class="topbar" id="topbar">
         <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
-        <span>Manajemen Produk</span>
+        <span>Manajemen Transaksi</span>
     </div>
 
-    <!-- Content -->
     <div class="content" id="main-content">
-        <h4>Daftar Produk</h4>
+        <h4>Daftar Transaksi</h4>
 
-        <div class="d-flex justify-content-between mb-3">
-            <a href="{{ route('admin.produk.create') }}" class="btn btn-primary">+ Tambah Produk</a>
-
-            <form action="{{ route('admin.produk.index') }}" method="GET" class="d-flex">
-                <input type="text" name="search" class="form-control me-2" placeholder="Cari nama produk..." value="{{ request('search') }}">
-                <select name="filter" class="form-select me-2">
-                    <option value="">-- Semua Kategori --</option>
-                    <option value="Shirt" {{ request('filter') == 'Shirt' ? 'selected' : '' }}>Shirt</option>
-                    <option value="Blouse" {{ request('filter') == 'Blouse' ? 'selected' : '' }}>Blouse</option>
-                    <option value="Tunic" {{ request('filter') == 'Tunic' ? 'selected' : '' }}>Tunic</option>
-                    <option value="Outerwear" {{ request('filter') == 'Outerwear' ? 'selected' : '' }}>Outerwear</option>
-                    <option value="Dress" {{ request('filter') == 'Dress' ? 'selected' : '' }}>Dress</option>
-                    <option value="Skirt" {{ request('filter') == 'Skirt' ? 'selected' : '' }}>Skirt</option>
-                    <option value="Pants" {{ request('filter') == 'Pants' ? 'selected' : '' }}>Pants</option>
-                    <option value="One Set" {{ request('filter') == 'One Set' ? 'selected' : '' }}>One Set</option>
-                    <option value="Prayer Set" {{ request('filter') == 'Prayer Set' ? 'selected' : '' }}>Prayer Set</option>
-                    <option value="Muslim Shirt" {{ request('filter') == 'Muslim Shirt' ? 'selected' : '' }}>Muslim Shirt</option>
-                </select>
-                <button class="btn btn-outline-secondary" type="submit">Cari</button>
-            </form>
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <form method="GET" class="d-flex">
+                    <input type="text" name="search" class="form-control me-2" placeholder="Cari nama/email/VA..." value="{{ request('search') }}">
+                    <input type="date" name="from" class="form-control me-2" value="{{ request('from') }}">
+                    <input type="date" name="to" class="form-control me-2" value="{{ request('to') }}">
+                    <button class="btn btn-outline-secondary" type="submit">Filter</button>
+                </form>
+            </div>
         </div>
 
         <div class="table-responsive">
-            <table class="table table-bordered table-striped bg-white">
+            <table class="table table-bordered bg-white">
                 <thead class="table-dark text-center">
                     <tr>
-                        <th>Gambar</th>
-                        <th>Nama Produk</th>
-                        <th>Kategori</th>
-                        <th>Harga</th>
-                        <th>Stok</th>
-                        <th width="200">Aksi</th>
+                        <th>Nama</th>
+                        <th>Email</th>
+                        <th>Telepon</th>
+                        <th>Metode</th>
+                        <th>Total</th>
+                        <th>VA</th>
+                        <th>Expired</th>
+                        <th>Status</th>
+                        <th>Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($produk as $item)
-                        <tr class="text-center">
-                            <td>
-                                @if ($item->gambar)
-                                    <img src="{{ asset('storage/' . $item->gambar) }}" width="80">
-                                @else
-                                    <span class="text-muted">-</span>
-                                @endif
-                            </td>
-                            <td>{{ $item->nama }}</td>
-                            <td>{{ $item->kategori }}</td>
-                            <td>Rp{{ number_format($item->harga, 0, ',', '.') }}</td>
-                            <td>
-                                @php
-                                    $stok = json_decode($item->stock, true);
-                                @endphp
+                    @forelse($transaksis as $trx)
+                    <tr>
+                        <td>{{ $trx->nama }}</td>
+                        <td>{{ $trx->email }}</td>
+                        <td>{{ $trx->telepon }}</td>
+                        <td>{{ $trx->metode_pembayaran }}</td>
+                        <td>Rp{{ number_format($trx->total, 0, ',', '.') }}</td>
+                        <td>{{ $trx->va_number }}</td>
+                        <td>{{ $trx->expired_at->format('Y-m-d H:i') }}</td>
+                        <td>
+                            <form action="{{ route('admin.transaksi.update', $trx->id) }}" method="POST">
+                                @csrf
+                                @method('PUT')
+                                <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                                    <option value="pending" {{ $trx->status == 'pending' ? 'selected' : '' }}>Pending</option>
+                                    <option value="proses" {{ $trx->status == 'proses' ? 'selected' : '' }}>Proses</option>
+                                    <option value="sukses" {{ $trx->status == 'sukses' ? 'selected' : '' }}>Sukses</option>
+                                    <option value="gagal" {{ $trx->status == 'gagal' ? 'selected' : '' }}>Gagal</option>
+                                </select>
 
-                                @if (is_array($stok))
-                                    @foreach ($stok as $ukuran => $jumlah)
-                                        <div>{{ $ukuran }}: {{ $jumlah }}</div>
-                                    @endforeach
-                                @else
-                                    <span class="text-muted">-</span>
-                                @endif
-                            </td>
-
-                            <td>
-                                <a href="{{ route('admin.produk.edit', $item->id) }}" class="btn btn-sm btn-warning">Edit</a>
-                                <form action="{{ route('admin.produk.destroy', $item->id) }}" method="POST" class="d-inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button class="btn btn-sm btn-danger" onclick="return confirm('Yakin hapus produk ini?')">Hapus</button>
-                                </form>
-                            </td>
-                        </tr>
+                            </form>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-info" onclick="alert(JSON.stringify({!! json_encode($trx->items) !!}, null, 2))">Lihat Item</button>
+                        </td>
+                    </tr>
                     @empty
-                        <tr>
-                            <td colspan="6" class="text-center">Belum ada produk</td>
-                        </tr>
+                    <tr>
+                        <td colspan="9" class="text-center">Tidak ada transaksi</td>
+                    </tr>
                     @endforelse
                 </tbody>
             </table>

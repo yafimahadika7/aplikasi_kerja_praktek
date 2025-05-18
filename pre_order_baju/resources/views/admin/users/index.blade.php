@@ -94,7 +94,7 @@
         @endif
 
         @if (Auth::user()->role === 'admin' || Auth::user()->role === 'operation')
-            <a href="#">💳 Transaksi</a>
+            <a href="{{ route('admin.transaksi.index') }}">💳 Transaksi</a>
         @endif
 
         @if (Auth::user()->role === 'admin' || Auth::user()->role === 'produk')
