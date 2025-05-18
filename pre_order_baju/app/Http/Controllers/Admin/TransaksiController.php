@@ -37,13 +37,22 @@ class TransaksiController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:pending,proses,sukses,gagal'
+            'status' => 'required|in:pending,proses,sukses,gagal',
+            'serial_number' => 'nullable|string|max:255'
         ]);
 
         $transaksi = \App\Models\Transaksi::findOrFail($id);
         $transaksi->status = $request->status;
+        $transaksi->serial_number = $request->serial_number; // ✅ ini penting
         $transaksi->save();
 
-        return redirect()->back()->with('success', 'Status transaksi berhasil diperbarui.');
+        return redirect()->route('admin.transaksi.index')->with('success', 'Transaksi diperbarui.');
     }
+
+    public function edit($id)
+    {
+        $transaksi = \App\Models\Transaksi::findOrFail($id);
+        return view('admin.transaksi.edit', compact('transaksi'));
+    }
+
 }

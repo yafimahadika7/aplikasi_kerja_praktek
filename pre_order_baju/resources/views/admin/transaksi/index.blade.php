@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Manajemen Produk</title>
+    <title>Manajemen Transaksi</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
@@ -81,123 +81,158 @@
 </head>
 <body>
 
-    <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
-        <div class="text-center mb-3">
-            <strong>{{ Auth::user()->name }}</strong><br>
-            <small class="{{ Auth::user()->role === 'admin' ? 'text-warning' : 'text-white' }}">
-                {{ ucfirst(Auth::user()->role) }}
-            </small>
+<div class="sidebar" id="sidebar">
+    <div class="text-center mb-3">
+        <strong>{{ Auth::user()->name }}</strong><br>
+        <small class="{{ Auth::user()->role === 'admin' ? 'text-warning' : 'text-white' }}">
+            {{ ucfirst(Auth::user()->role) }}
+        </small>
+    </div>
+    @if (in_array(Auth::user()->role, ['admin', 'operation', 'finance', 'produk']))
+        <a href="#">📊 Dashboard</a>
+    @endif
+
+    @if (in_array(Auth::user()->role, ['admin', 'operation']))
+        <a href="{{ route('admin.transaksi.index') }}">💳 Transaksi</a>
+    @endif
+
+    @if (in_array(Auth::user()->role, ['admin', 'produk']))
+        <a href="{{ route('admin.produk.index') }}">🛍️ Produk</a>
+    @endif
+
+    @if (Auth::user()->role === 'admin')
+        <a href="{{ route('admin.users.index') }}">👤 User</a>
+    @endif
+
+    @if (in_array(Auth::user()->role, ['admin', 'finance']))
+        <a href="#">📈 Penjualan</a>
+    @endif
+    <form method="POST" action="{{ route('logout') }}">
+        @csrf
+        <button type="submit">🚪 Logout</button>
+    </form>
+</div>
+
+<div class="topbar" id="topbar">
+    <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+    <span>Manajemen Transaksi</span>
+</div>
+
+<div class="content" id="main-content">
+    <h4>Daftar Transaksi</h4>
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <div>
+            <input type="checkbox" id="autoRefresh"> <label for="autoRefresh">Auto Refresh</label>
         </div>
-        @if (in_array(Auth::user()->role, ['admin', 'operation', 'finance', 'produk']))
-            <a href="#">📊 Dashboard</a>
-        @endif
-
-        @if (in_array(Auth::user()->role, ['admin', 'operation']))
-            <a href="{{ route('admin.transaksi.index') }}">💳 Transaksi</a>
-        @endif
-
-        @if (in_array(Auth::user()->role, ['admin', 'produk']))
-            <a href="{{ route('admin.produk.index') }}">🛍️ Produk</a>
-        @endif
-
-        @if (Auth::user()->role === 'admin')
-            <a href="{{ route('admin.users.index') }}">👤 User</a>
-        @endif
-
-        @if (in_array(Auth::user()->role, ['admin', 'finance']))
-            <a href="#">📈 Penjualan</a>
-        @endif
-        <form method="POST" action="{{ route('logout') }}">
-            @csrf
-            <button type="submit">🚪 Logout</button>
-        </form>
+        <button class="btn btn-sm btn-outline-primary" onclick="refreshPage()">🔄 Refresh</button>
     </div>
 
-    <!-- Topbar -->
-    <div class="topbar" id="topbar">
-        <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
-        <span>Manajemen Transaksi</span>
-    </div>
-
-    <div class="content" id="main-content">
-        <h4>Daftar Transaksi</h4>
-
-        <div class="row mb-3">
-            <div class="col-md-6">
-                <form method="GET" class="d-flex">
-                    <input type="text" name="search" class="form-control me-2" placeholder="Cari nama/email/VA..." value="{{ request('search') }}">
-                    <input type="date" name="from" class="form-control me-2" value="{{ request('from') }}">
-                    <input type="date" name="to" class="form-control me-2" value="{{ request('to') }}">
-                    <button class="btn btn-outline-secondary" type="submit">Filter</button>
-                </form>
-            </div>
-        </div>
-
-        <div class="table-responsive">
-            <table class="table table-bordered bg-white">
-                <thead class="table-dark text-center">
-                    <tr>
-                        <th>Nama</th>
-                        <th>Email</th>
-                        <th>Telepon</th>
-                        <th>Metode</th>
-                        <th>Total</th>
-                        <th>VA</th>
-                        <th>Expired</th>
-                        <th>Status</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($transaksis as $trx)
-                    <tr>
-                        <td>{{ $trx->nama }}</td>
-                        <td>{{ $trx->email }}</td>
-                        <td>{{ $trx->telepon }}</td>
-                        <td>{{ $trx->metode_pembayaran }}</td>
-                        <td>Rp{{ number_format($trx->total, 0, ',', '.') }}</td>
-                        <td>{{ $trx->va_number }}</td>
-                        <td>{{ $trx->expired_at->format('Y-m-d H:i') }}</td>
-                        <td>
-                            <form action="{{ route('admin.transaksi.update', $trx->id) }}" method="POST">
-                                @csrf
-                                @method('PUT')
-                                <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
-                                    <option value="pending" {{ $trx->status == 'pending' ? 'selected' : '' }}>Pending</option>
-                                    <option value="proses" {{ $trx->status == 'proses' ? 'selected' : '' }}>Proses</option>
-                                    <option value="sukses" {{ $trx->status == 'sukses' ? 'selected' : '' }}>Sukses</option>
-                                    <option value="gagal" {{ $trx->status == 'gagal' ? 'selected' : '' }}>Gagal</option>
-                                </select>
-
-                            </form>
-                        </td>
-                        <td>
-                            <button class="btn btn-sm btn-info" onclick="alert(JSON.stringify({!! json_encode($trx->items) !!}, null, 2))">Lihat Item</button>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="9" class="text-center">Tidak ada transaksi</td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <form method="GET" class="d-flex">
+                <input type="text" name="search" class="form-control me-2" placeholder="Cari nama/email..." value="{{ request('search') }}">
+                <input type="date" name="from" class="form-control me-2" value="{{ request('from') }}">
+                <input type="date" name="to" class="form-control me-2" value="{{ request('to') }}">
+                <button class="btn btn-outline-secondary" type="submit">Filter</button>
+            </form>
         </div>
     </div>
 
-    <!-- JavaScript -->
-    <script>
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const content = document.getElementById('main-content');
-            const topbar = document.getElementById('topbar');
+    <div class="table-responsive">
+        <table class="table table-bordered bg-white">
+            <thead class="table-dark text-center">
+                <tr>
+                    <th>Tanggal</th>
+                    <th>Nama</th>
+                    <th>Email</th>
+                    <th>Telepon</th>
+                    <th>Metode</th>
+                    <th>Total</th>
+                    <th>Serial Number</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($transaksis as $trx)
+                <tr>
+                    <td>{{ $trx->created_at->format('Y-m-d H:i') }}</td>
+                    <td>{{ $trx->nama }}</td>
+                    <td>{{ $trx->email }}</td>
+                    <td>{{ $trx->telepon }}</td>
+                    <td>{{ $trx->metode_pembayaran }}</td>
+                    <td>Rp{{ number_format($trx->total, 0, ',', '.') }}</td>
+                    <td>{{ $trx->serial_number ?? '-' }}</td>
+                    <td>
+                        <form method="POST" action="{{ route('admin.transaksi.update', $trx->id) }}">
+                            @csrf
+                            @method('PUT')
+                            <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                                <option value="pending" {{ $trx->status == 'pending' ? 'selected' : '' }}>Pending</option>
+                                <option value="proses" {{ $trx->status == 'proses' ? 'selected' : '' }}>Proses</option>
+                                <option value="sukses" {{ $trx->status == 'sukses' ? 'selected' : '' }}>Sukses</option>
+                                <option value="gagal" {{ $trx->status == 'gagal' ? 'selected' : '' }}>Gagal</option>
+                            </select>
+                            <input type="hidden" name="serial_number" value="{{ $trx->serial_number }}">
+                        </form>
+                    </td>
+                    <td>
+                        <a href="{{ route('admin.transaksi.edit', $trx->id) }}" class="btn btn-sm btn-info">Update SN</a>
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
 
-            sidebar.classList.toggle('hide');
-            content.classList.toggle('collapsed');
-            topbar.classList.toggle('collapsed');
+<script>
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const content = document.getElementById('main-content');
+    const topbar = document.getElementById('topbar');
+
+    sidebar.classList.toggle('hide');
+    content.classList.toggle('collapsed');
+    topbar.classList.toggle('collapsed');
+}
+
+let autoRefreshInterval = null;
+
+document.addEventListener('DOMContentLoaded', function () {
+    const checkbox = document.getElementById('autoRefresh');
+    const isAuto = localStorage.getItem('autoRefreshEnabled') === 'true';
+
+    if (isAuto) {
+        checkbox.checked = true;
+        startAutoRefresh();
+    }
+
+    checkbox.addEventListener('change', function () {
+        if (this.checked) {
+            localStorage.setItem('autoRefreshEnabled', 'true');
+            startAutoRefresh();
+        } else {
+            localStorage.setItem('autoRefreshEnabled', 'false');
+            stopAutoRefresh();
         }
-    </script>
+    });
+});
+
+function startAutoRefresh() {
+    autoRefreshInterval = setInterval(() => {
+        location.reload();
+    }, 10000);
+}
+
+function stopAutoRefresh() {
+    clearInterval(autoRefreshInterval);
+}
+
+function refreshPage() {
+    location.reload();
+}
+</script>
 
 </body>
 </html>

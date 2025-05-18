@@ -65,6 +65,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
     // Manajemen Transaksi (khusus admin/operation)
     Route::get('/transaksi', [AdminTransaksiController::class, 'index'])->name('transaksi.index');
+    Route::get('/transaksi/{id}/edit', [AdminTransaksiController::class, 'edit'])->name('transaksi.edit');
     Route::put('/transaksi/{id}', [AdminTransaksiController::class, 'update'])->name('transaksi.update');
 });
 
