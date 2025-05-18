@@ -15,7 +15,14 @@
             text-align: center;
             min-height: 100vh;
             padding-top: 100px;
+            opacity: 0;
+            animation: fadeInBody 0.8s ease forwards;
         }
+
+        @keyframes fadeInBody {
+            to { opacity: 1; }
+        }
+
         body::before {
             content: '';
             position: absolute;
@@ -23,6 +30,7 @@
             background-color: rgba(0, 0, 0, 0.5);
             z-index: -1;
         }
+
         .produk-card {
             background-color: rgba(255, 255, 255, 0.95);
             border-radius: 15px;
@@ -31,7 +39,20 @@
             display: flex;
             align-items: center;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            animation: slideInUp 0.5s ease;
         }
+
+        @keyframes slideInUp {
+            from {
+                transform: translateY(40px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
         .produk-img {
             width: 70px;
             height: 70px;
@@ -39,13 +60,16 @@
             border-radius: 10px;
             margin-right: 1rem;
         }
+
         .produk-info {
             text-align: left;
             flex-grow: 1;
         }
+
         .input-group-sm {
             max-width: 120px;
         }
+
         .total-bar {
             position: fixed;
             bottom: 0;
@@ -59,47 +83,66 @@
             border-top: 1px solid #ccc;
             z-index: 100;
         }
-        
+
+        .header-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            animation: fadeInDown 0.7s ease;
+        }
+
+        @keyframes fadeInDown {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .back-button {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+
+        .back-button:hover {
+            background-color: rgba(255, 255, 255, 0.25);
+            transform: translateY(-50%) scale(1.05);
+        }
+
+        .main-title {
+            font-size: 2rem;
+            font-weight: bold;
+            color: white;
+            margin: 0;
+        }
     </style>
 </head>
 <body>
-<div class="position-fixed top-0 start-0 p-3 z-1">
-    <a href="{{ route('produk.index') }}" class="btn btn-light shadow-sm">
-        &larr; Kembali
-    </a>
-</div>
 <div class="container">
-    <h3 class="mb-4">Keranjang Belanja</h3>
+    <div class="header-container">
+        <a href="{{ url('/produk') }}" class="back-button">
+            <i class="bi bi-arrow-left"></i> Back
+        </a>
+        <h1 class="main-title">Keranjang Belanja</h1>
+    </div>
 
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-
-    @if($items->count())
-        <form id="cartForm">
-            @foreach($items as $item)
-                <div class="produk-card text-dark">
-                    <input type="checkbox" class="form-check-input me-2 item-checkbox" data-id="{{ $item->id }}" data-price="{{ $item->produk->harga }}" data-qty="{{ $item->jumlah }}">
-                    <img src="{{ asset('storage/' . $item->produk->gambar) }}" alt="{{ $item->produk->nama }}" class="produk-img">
-                    <div class="produk-info">
-                        <strong>{{ $item->produk->nama }}</strong><br>
-                        Ukuran: {{ $item->ukuran }}<br>
-                        Harga: Rp{{ number_format($item->produk->harga, 0, ',', '.') }}
-                    </div>
-                    <div class="input-group input-group-sm mx-3">
-                        <button type="button" class="btn btn-outline-secondary btn-minus">-</button>
-                        <input type="text" class="form-control text-center qty-input" value="{{ $item->jumlah }}" data-id="{{ $item->id }}" readonly>
-                        <button type="button" class="btn btn-outline-secondary btn-plus">+</button>
-                    </div>
-                    <button type="button" class="btn btn-sm btn-danger btn-hapus" data-url="{{ route('keranjang.destroy', $item->id) }}">
-                        Hapus
-                    </button>
-                </div>
-            @endforeach
-        </form>
-    @else
-        <p class="text-muted">Keranjang Anda kosong.</p>
-    @endif
+    <div id="keranjangList"></div>
 </div>
 
 <div class="total-bar text-dark">
@@ -107,54 +150,90 @@
     <button class="btn btn-success">Beli</button>
 </div>
 
-<!-- Form Hapus Global -->
-<form id="formHapus" method="POST" style="display: none;">
-    @csrf
-    @method('DELETE')
-</form>
-
 <script>
-    const checkboxes = document.querySelectorAll('.item-checkbox');
+    const keranjangList = document.getElementById('keranjangList');
     const totalHarga = document.getElementById('totalHarga');
 
-    checkboxes.forEach(cb => {
-        cb.addEventListener('change', hitungTotal);
-    });
+    function renderKeranjang() {
+        const items = JSON.parse(localStorage.getItem('keranjang')) || [];
+        keranjangList.innerHTML = '';
 
-    function hitungTotal() {
+        if (items.length === 0) {
+            keranjangList.innerHTML = '<p class="text-muted">Keranjang Anda kosong.</p>';
+            totalHarga.textContent = 'Rp0';
+            return;
+        }
+
         let total = 0;
-        checkboxes.forEach(cb => {
-            if (cb.checked) {
-                const harga = parseInt(cb.dataset.price);
-                const qty = parseInt(cb.dataset.qty);
-                total += harga * qty;
-            }
+
+        items.forEach((item, index) => {
+            const subtotal = item.harga * item.jumlah;
+            total += subtotal;
+
+            const el = document.createElement('div');
+            el.className = 'produk-card text-dark';
+            el.innerHTML = `
+                <input type="checkbox" class="form-check-input me-2 item-checkbox" checked data-index="${index}" data-subtotal="${subtotal}">
+                <img src="${item.gambar}" alt="${item.nama}" class="produk-img">
+                <div class="produk-info">
+                    <strong>${item.nama}</strong><br>
+                    Ukuran: ${item.ukuran}<br>
+                    Harga: Rp${item.harga.toLocaleString('id-ID')}
+                </div>
+                <div class="input-group input-group-sm mx-3">
+                    <button type="button" class="btn btn-outline-secondary btn-minus" data-index="${index}">-</button>
+                    <input type="text" class="form-control text-center qty-input" value="${item.jumlah}" readonly>
+                    <button type="button" class="btn btn-outline-secondary btn-plus" data-index="${index}">+</button>
+                </div>
+                <button class="btn btn-sm btn-danger btn-delete" data-index="${index}">Hapus</button>
+            `;
+
+            keranjangList.appendChild(el);
         });
+
         totalHarga.textContent = 'Rp' + total.toLocaleString('id-ID');
-    }
 
-    // Tombol hapus logic
-    document.querySelectorAll('.btn-hapus').forEach(button => {
-        button.addEventListener('click', function () {
-            if (confirm('Yakin hapus item ini?')) {
-                const form = document.getElementById('formHapus');
-                form.setAttribute('action', this.getAttribute('data-url'));
-                form.submit();
-            }
+        document.querySelectorAll('.btn-delete').forEach(btn => {
+            btn.addEventListener('click', e => {
+                const index = parseInt(e.target.getAttribute('data-index'));
+                items.splice(index, 1);
+                localStorage.setItem('keranjang', JSON.stringify(items));
+                renderKeranjang();
+            });
         });
-    });
-</script>
 
-<script>
-    // Sembunyikan alert dalam 3 detik
-    const alertEl = document.querySelector('.alert');
-    if (alertEl) {
-        setTimeout(() => {
-            alertEl.style.transition = 'opacity 0.5s ease';
-            alertEl.style.opacity = '0';
-            setTimeout(() => alertEl.remove(), 500); // hapus dari DOM setelah fade out
-        }, 3000);
+        document.querySelectorAll('.btn-plus').forEach(btn => {
+            btn.addEventListener('click', e => {
+                const index = parseInt(e.target.getAttribute('data-index'));
+                items[index].jumlah++;
+                localStorage.setItem('keranjang', JSON.stringify(items));
+                renderKeranjang();
+            });
+        });
+
+        document.querySelectorAll('.btn-minus').forEach(btn => {
+            btn.addEventListener('click', e => {
+                const index = parseInt(e.target.getAttribute('data-index'));
+                if (items[index].jumlah > 1) {
+                    items[index].jumlah--;
+                    localStorage.setItem('keranjang', JSON.stringify(items));
+                    renderKeranjang();
+                }
+            });
+        });
+
+        document.querySelectorAll('.item-checkbox').forEach(cb => {
+            cb.addEventListener('change', () => {
+                let sum = 0;
+                document.querySelectorAll('.item-checkbox:checked').forEach(c => {
+                    sum += parseInt(c.getAttribute('data-subtotal'));
+                });
+                totalHarga.textContent = 'Rp' + sum.toLocaleString('id-ID');
+            });
+        });
     }
+
+    document.addEventListener('DOMContentLoaded', renderKeranjang);
 </script>
 </body>
 </html>

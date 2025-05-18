@@ -18,15 +18,35 @@
             justify-content: center;
             align-items: center;
             flex-direction: column;
-            z-index: 1;
+            overflow: hidden;
         }
 
         body::before {
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background-color: rgba(0, 0, 0, 0.5); /* gelap 50% */
+            background-color: rgba(0, 0, 0, 0.5);
             z-index: -1;
+        }
+
+        .main-title {
+            font-size: 3.5rem;
+            opacity: 0;
+            animation: fadeInUp 1s ease forwards;
+        }
+
+        .sub-title {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            opacity: 0;
+            animation: fadeInUp 1s ease forwards;
+            animation-delay: 0.3s;
+        }
+
+        .btn-group {
+            opacity: 0;
+            animation: fadeInUp 1s ease forwards;
+            animation-delay: 0.6s;
         }
 
         .btn-outline-light {
@@ -46,11 +66,15 @@
             transform: scale(1.05);
         }
 
-        .main-title {
-            font-size: 3.5rem;
-        }
-        .sub-title {
-            font-size: 1.3rem;
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         @media (max-width: 768px) {
@@ -67,18 +91,13 @@
                 width: 80%;
                 margin: 10px auto;
             }
-
-            body {
-                padding: 1rem;
-                text-align: center;
-            }
         }
     </style>
 </head>
 <body>
-    <h1 class="main-title mb-3">Welcome to <span class="fw-bold">Bellybee</span></h1>
-    <p class="sub-title mb-4">Please select one of the options below:</p>
-    <div>
+    <h1 class="main-title">Welcome to <span class="fw-bold">Bellybee</span></h1>
+    <p class="sub-title">Please select one of the options below:</p>
+    <div class="btn-group">
         <a href="{{ route('produk.index') }}" class="btn btn-outline-light">Our Products</a>
         <a href="{{ route('custom.index') }}" class="btn btn-outline-light">Custom Design</a>
     </div>

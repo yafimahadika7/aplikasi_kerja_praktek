@@ -43,16 +43,14 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::resource('produk', AdminProdukController::class);
 });
 
-// Pelanggan (halaman publik)
+// Halaman publik (pelanggan)
 Route::get('/produk', [PelangganProdukController::class, 'index'])->name('produk.index');
 Route::get('/custom', [CustomController::class, 'index'])->name('custom.index');
 
-// Keranjang (harus login)
-Route::middleware(['auth'])->group(function () {
-    Route::get('/keranjang', [KeranjangController::class, 'index'])->name('keranjang.index');
-    Route::post('/keranjang', [KeranjangController::class, 'store'])->name('keranjang.store');
-    Route::delete('/keranjang/{id}', [KeranjangController::class, 'destroy'])->name('keranjang.destroy');
-});
+// Keranjang (tanpa login, pakai localStorage)
+Route::get('/keranjang', function () {
+    return view('pelanggan.keranjang.index');
+})->name('keranjang.index');
 
 // Auth (Laravel Breeze)
 require __DIR__.'/auth.php';
