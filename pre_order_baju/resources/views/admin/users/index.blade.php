@@ -90,7 +90,7 @@
             </small>
         </div>
         @if (Auth::user()->role === 'admin' || Auth::user()->role === 'operation' || Auth::user()->role === 'finance' || Auth::user()->role === 'produk')
-            <a href="#">📊 Dashboard</a>
+            <a href="{{ route('admin.dashboard') }}">📊 Dashboard</a>
         @endif
 
         @if (Auth::user()->role === 'admin' || Auth::user()->role === 'operation')
@@ -106,7 +106,7 @@
         @endif
 
         @if (Auth::user()->role === 'admin' || Auth::user()->role === 'finance')
-            <a href="#">📈 Penjualan</a>
+            <a href="{{ route('admin.penjualan.index') }}">📈 Penjualan</a>
         @endif
         <form method="POST" action="{{ route('logout') }}">
             @csrf

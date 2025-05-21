@@ -154,6 +154,20 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 12px rgba(220,53,69,0.4);
         }
+
+        .result-alert {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            color: black;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+            z-index: 1100;
+            text-align: center;
+        }
     </style>
     </style>
 </head>
@@ -206,7 +220,13 @@
                             <p class="text-muted mb-1">{{ $item->kategori }}</p>
                             <p class="fw-bold">Rp{{ number_format($item->harga, 0, ',', '.') }}</p>
                             <div class="btn-group-modern">
-                                <button class="btn-modern">Beli</button>
+                                <button class="btn-modern btn-beli"
+                                        data-nama="{{ $item->nama }}"
+                                        data-harga="{{ $item->harga }}"
+                                        data-gambar="{{ asset('storage/' . $item->gambar) }}"
+                                        data-ukuran="All Size">
+                                    Beli
+                                </button>
                                 <button class="btn-modern btn-keranjang"
                                         data-id="{{ $item->id }}"
                                         data-nama="{{ $item->nama }}"
@@ -227,6 +247,39 @@
             <p class="text-center">Silakan pilih kategori di atas untuk melihat produk.</p>
         @endif
     </div>
+</div>
+
+<!-- Modal Pilih Ukuran & Jumlah -->
+<div class="modal fade" id="modalUkuranJumlah" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-dark">Pilih Ukuran & Jumlah</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body d-flex flex-column flex-md-row align-items-start">
+        <img id="previewBeliGambar" src="" class="img-fluid me-md-4 mb-3 mb-md-0" style="max-width: 250px;">
+        <div class="flex-grow-1 text-dark">
+          <h5 id="previewBeliNama"></h5>
+          <div class="mb-3">
+            <label class="form-label">Ukuran</label>
+            <select id="pilihUkuran" class="form-select">
+              <option>S</option>
+              <option>M</option>
+              <option>L</option>
+              <option>XL</option>
+              <option>All Size</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Jumlah</label>
+            <input type="number" class="form-control" id="jumlahProduk" min="1" value="1">
+          </div>
+          <button class="btn btn-primary w-100" id="lanjutIsiData">Lanjut</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Modal Tambah Keranjang -->
@@ -262,7 +315,131 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Checkout Data Diri -->
+<div class="modal fade" id="checkoutModal" tabindex="-1" aria-labelledby="checkoutModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-dark" id="checkoutModalLabel">Isi Data Diri</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-dark">
+        <form id="checkoutForm">
+          <div class="mb-3">
+            <label class="form-label">Nama Lengkap</label>
+            <input type="text" class="form-control" name="nama" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Nomor Telepon</label>
+            <input type="tel" class="form-control" name="telepon" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control" name="email" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Alamat</label>
+            <textarea class="form-control" name="alamat" required></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Metode Pembayaran</label>
+            <select class="form-select" name="metode_pembayaran" required>
+              <option value="BCA">Virtual Account BCA</option>
+              <option value="MANDIRI">Virtual Account Mandiri</option>
+              <option value="BNI">Virtual Account BNI</option>
+              <option value="BRI">Virtual Account BRI</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Beli Sekarang</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="resultAlert" class="result-alert" style="display: none;">
+    <h5 class="text-success">Transaksi berhasil!</h5>
+    <p>VA: <span id="vaNumber"></span></p>
+    <p>Expired: <span id="expiredAt"></span></p>
+    <button class="btn btn-sm btn-primary mt-2" onclick="window.location.reload()">OK</button>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+let selectedProduct = null;
+
+document.querySelectorAll('.btn-beli').forEach(btn => {
+    btn.addEventListener('click', () => {
+        selectedProduct = {
+            nama: btn.dataset.nama,
+            harga: parseInt(btn.dataset.harga),
+            gambar: btn.dataset.gambar
+        };
+
+        // Tampilkan ke modal
+        document.getElementById('previewBeliGambar').src = selectedProduct.gambar;
+        document.getElementById('previewBeliNama').innerText = selectedProduct.nama;
+
+        const modalUkuran = new bootstrap.Modal(document.getElementById('modalUkuranJumlah'));
+        modalUkuran.show();
+    });
+});
+
+document.getElementById('lanjutIsiData').addEventListener('click', () => {
+    selectedProduct.ukuran = document.getElementById('pilihUkuran').value;
+    selectedProduct.jumlah = parseInt(document.getElementById('jumlahProduk').value);
+
+    const modalUkuran = bootstrap.Modal.getInstance(document.getElementById('modalUkuranJumlah'));
+    modalUkuran.hide();
+
+    const modalCheckout = new bootstrap.Modal(document.getElementById('checkoutModal'));
+    modalCheckout.show();
+});
+
+document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+    const data = {};
+    formData.forEach((value, key) => data[key] = value);
+
+    data.items = [selectedProduct];
+    data.total = selectedProduct.harga * selectedProduct.jumlah;
+
+    fetch("/transaksi", {
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        document.getElementById('vaNumber').innerText = result.va_number;
+        document.getElementById('expiredAt').innerText = result.expired_at;
+        document.getElementById('resultAlert').style.display = 'block';
+        fetch("http://localhost:8000/tes-email")
+                .then(() => console.log("Tes email dipanggil"));
+
+            const alertBox = document.getElementById('resultAlert');
+            alertBox.innerHTML = `
+                <h5 class="text-success">Transaksi berhasil!</h5>
+                <p>VA: ${result.va_number}</p>
+                <p>Expired: ${result.expired_at}</p>
+                <button class="btn btn-sm btn-primary mt-2" onclick="window.location.href='/produk'">OK</button>
+            `;
+            alertBox.style.display = 'block';
+    })
+    .catch(error => {
+        console.error("Error:", error);
+        alert("Terjadi kesalahan saat transaksi.");
+    });
+});
+</script>
+
 <script>
     const keranjangButtons = document.querySelectorAll('.btn-keranjang');
     const modal = new bootstrap.Modal(document.getElementById('modalKeranjang'));

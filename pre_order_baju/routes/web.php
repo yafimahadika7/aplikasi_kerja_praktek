@@ -2,84 +2,104 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Http\Request;
+
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ProdukController as AdminProdukController;
 use App\Http\Controllers\Admin\TransaksiController as AdminTransaksiController;
+use App\Http\Controllers\Admin\PenjualanController;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Pelanggan\ProdukController as PelangganProdukController;
 use App\Http\Controllers\Pelanggan\CustomController;
-use App\Http\Controllers\Pelanggan\KeranjangController;
 use App\Http\Controllers\TransaksiController;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-*/
+use App\Mail\VirtualAccountEmail;
+use App\Mail\ResiPengirimanEmail;
+use App\Models\Transaksi;
+use App\Exports\TransaksiExport;
+use Maatwebsite\Excel\Facades\Excel;
 
-// Landing page pelanggan (tanpa login)
-Route::get('/', function () {
-    return view('welcome');
-});
+// ✅ Landing Page
+Route::get('/', fn() => view('welcome'));
 
-// Redirect setelah login sesuai role
+// ✅ Redirect user sesuai role ke /admin/dashboard
 Route::get('/redirect', function () {
-    $user = Auth::user();
-    if (!$user) return redirect('/');
-
-    switch ($user->role) {
-        case 'admin':
-            return redirect()->route('admin.dashboard');
-        case 'produk':
-            return redirect()->route('admin.produk.index');
-        case 'operation':
-            return redirect()->route('admin.transaksi.index');
-        case 'finance':
-            return redirect('/admin/penjualan'); // pastikan ini ada view-nya
-        default:
-            return redirect('/dashboard');
-    }
+    return redirect()->route('admin.dashboard');
 })->middleware('auth');
 
-// Dashboard user biasa
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+// ✅ Dashboard tunggal (untuk semua role)
+Route::get('/admin/dashboard', [DashboardController::class, 'adminDashboard'])
+    ->middleware(['auth'])
+    ->name('admin.dashboard');
 
-// Dashboard admin
-Route::get('/admin/dashboard', function () {
-    return view('admin.dashboard');
-})->middleware(['auth'])->name('admin.dashboard');
+// ✅ Dashboard default Laravel (jika diperlukan)
+Route::get('/dashboard', fn() => view('dashboard'))
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
-// Halaman profil user (semua yang login bisa akses)
+// ✅ Profil user
 Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Admin section (khusus user dengan akses admin)
-Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+// ✅ User (khusus admin)
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('users', UserController::class);
-    Route::resource('produk', AdminProdukController::class);
+});
 
-    // Manajemen Transaksi (khusus admin/operation)
+// ✅ Produk (admin & produk)
+Route::middleware(['auth', 'role:admin,produk'])->prefix('admin')->name('admin.')->group(function () {
+    Route::resource('produk', AdminProdukController::class);
+});
+
+// ✅ Transaksi (admin & operation)
+Route::middleware(['auth', 'role:admin,operation'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/transaksi', [AdminTransaksiController::class, 'index'])->name('transaksi.index');
     Route::get('/transaksi/{id}/edit', [AdminTransaksiController::class, 'edit'])->name('transaksi.edit');
     Route::put('/transaksi/{id}', [AdminTransaksiController::class, 'update'])->name('transaksi.update');
+    Route::get('/transaksi/export', fn(Request $request) => Excel::download(new TransaksiExport($request), 'daftar_transaksi.xlsx'))->name('transaksi.export');
 });
 
-// Halaman publik (pelanggan)
+// ✅ Penjualan (admin & finance)
+Route::middleware(['auth', 'role:admin,finance'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/penjualan', [PenjualanController::class, 'index'])->name('penjualan.index');
+    Route::get('/penjualan/export', [PenjualanController::class, 'export'])->name('penjualan.export');
+});
+
+// ✅ Pelanggan (publik)
 Route::get('/produk', [PelangganProdukController::class, 'index'])->name('produk.index');
 Route::get('/custom', [CustomController::class, 'index'])->name('custom.index');
-
-// Keranjang (tanpa login, pakai localStorage)
-Route::get('/keranjang', function () {
-    return view('pelanggan.keranjang.index');
-})->name('keranjang.index');
-
-// Transaksi (tanpa login)
+Route::get('/keranjang', fn() => view('pelanggan.keranjang.index'))->name('keranjang.index');
 Route::post('/transaksi', [TransaksiController::class, 'store'])->name('transaksi.store');
 
-// Auth (Laravel Breeze)
+// ✅ Email testing
+Route::get('/tes-email', function () {
+    $transaksi = Transaksi::latest()->first();
+    if (!$transaksi || !$transaksi->email) return "❌ Tidak ada transaksi atau email tidak ditemukan.";
+
+    try {
+        Mail::to($transaksi->email)->send(new VirtualAccountEmail($transaksi));
+        return "✅ Email VA berhasil dikirim ke: " . $transaksi->email;
+    } catch (\Exception $e) {
+        return "❌ Gagal kirim email VA: " . $e->getMessage();
+    }
+});
+
+Route::get('/tes-resi', function () {
+    $transaksi = Transaksi::latest()->first();
+    if (!$transaksi || !$transaksi->email) return "❌ Tidak ada transaksi atau email tidak ditemukan.";
+
+    try {
+        Mail::to($transaksi->email)->send(new ResiPengirimanEmail($transaksi));
+        return "✅ Email Resi berhasil dikirim ke: " . $transaksi->email;
+    } catch (\Exception $e) {
+        return "❌ Gagal kirim email Resi: " . $e->getMessage();
+    }
+});
+
+// ✅ Auth default
 require __DIR__.'/auth.php';

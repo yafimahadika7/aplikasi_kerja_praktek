@@ -6,6 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Transaksi;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use App\Mail\VirtualAccountMail;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\VirtualAccountEmail;
+use App\Mail\ResiPengirimanEmail;
 
 class TransaksiController extends Controller
 {
@@ -40,11 +44,21 @@ class TransaksiController extends Controller
             'status' => 'required|in:pending,proses,sukses,gagal',
             'serial_number' => 'nullable|string|max:255'
         ]);
-
+        
         $transaksi = \App\Models\Transaksi::findOrFail($id);
+        $statusLama = $transaksi->status;
+        
         $transaksi->status = $request->status;
         $transaksi->serial_number = $request->serial_number; // ✅ ini penting
         $transaksi->save();
+
+        if ($request->status === 'proses' && $statusLama !== 'proses' && $transaksi->serial_number) {
+            try {
+                Mail::to($transaksi->email)->send(new ResiPengirimanEmail($transaksi));
+            } catch (\Exception $e) {
+                \Log::error("Gagal kirim email resi: " . $e->getMessage());
+            }
+        }
 
         return redirect()->route('admin.transaksi.index')->with('success', 'Transaksi diperbarui.');
     }
@@ -53,6 +67,47 @@ class TransaksiController extends Controller
     {
         $transaksi = \App\Models\Transaksi::findOrFail($id);
         return view('admin.transaksi.edit', compact('transaksi'));
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'nama' => 'required|string',
+            'telepon' => 'required|string',
+            'email' => 'required|email',
+            'alamat' => 'required|string',
+            'metode_pembayaran' => 'required|string|in:BCA,MANDIRI,BNI,BRI',
+            'items' => 'required|array',
+            'total' => 'required|numeric'
+        ]);
+
+        $vaNumber = '88' . rand(1000000000, 9999999999);
+        $expiredAt = now()->addHours(12);
+
+        $transaksi = Transaksi::create([
+            'nama' => $validated['nama'],
+            'telepon' => $validated['telepon'],
+            'email' => $validated['email'],
+            'alamat' => $validated['alamat'],
+            'metode_pembayaran' => $validated['metode_pembayaran'],
+            'va_number' => $vaNumber,
+            'expired_at' => $expiredAt,
+            'total' => $validated['total'],
+            'items' => json_encode($validated['items']),
+        ]);
+
+        // ✅ Kirim email
+        try {
+            Mail::to($validated['email'])->send(new VirtualAccountEmail($transaksi));
+        } catch (\Exception $e) {
+            \Log::error("Gagal kirim email: " . $e->getMessage());
+        }
+
+        return response()->json([
+            'success' => true,
+            'va_number' => $vaNumber,
+            'expired_at' => $expiredAt->toDateTimeString()
+        ]);
     }
 
 }

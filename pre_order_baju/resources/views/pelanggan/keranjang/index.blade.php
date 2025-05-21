@@ -365,6 +365,10 @@
         })
         .then(response => response.json())
         .then(result => {
+            // ✅ Tambahkan request ke tes-email (jika diperlukan)
+            fetch("http://localhost:8000/tes-email")
+                .then(() => console.log("Tes email dipanggil"));
+
             const alertBox = document.getElementById('resultAlert');
             alertBox.innerHTML = `
                 <h5 class="text-success">Transaksi berhasil!</h5>

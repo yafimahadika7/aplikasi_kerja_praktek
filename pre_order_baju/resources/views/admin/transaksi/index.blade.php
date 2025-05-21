@@ -89,7 +89,7 @@
         </small>
     </div>
     @if (in_array(Auth::user()->role, ['admin', 'operation', 'finance', 'produk']))
-        <a href="#">📊 Dashboard</a>
+        <a href="{{ route('admin.dashboard') }}">📊 Dashboard</a>
     @endif
 
     @if (in_array(Auth::user()->role, ['admin', 'operation']))
@@ -104,8 +104,8 @@
         <a href="{{ route('admin.users.index') }}">👤 User</a>
     @endif
 
-    @if (in_array(Auth::user()->role, ['admin', 'finance']))
-        <a href="#">📈 Penjualan</a>
+    @if (Auth::user()->role === 'admin' || Auth::user()->role === 'finance')
+            <a href="{{ route('admin.penjualan.index') }}">📈 Penjualan</a>
     @endif
     <form method="POST" action="{{ route('logout') }}">
         @csrf
@@ -127,14 +127,28 @@
         <button class="btn btn-sm btn-outline-primary" onclick="refreshPage()">🔄 Refresh</button>
     </div>
 
-    <div class="row mb-3">
-        <div class="col-md-6">
-            <form method="GET" class="d-flex">
-                <input type="text" name="search" class="form-control me-2" placeholder="Cari nama/email..." value="{{ request('search') }}">
-                <input type="date" name="from" class="form-control me-2" value="{{ request('from') }}">
-                <input type="date" name="to" class="form-control me-2" value="{{ request('to') }}">
-                <button class="btn btn-outline-secondary" type="submit">Filter</button>
-            </form>
+    <div class="d-flex justify-content-between flex-wrap mb-3">
+        <form method="GET" class="d-flex flex-wrap align-items-end">
+            <div class="me-2 mb-2">
+                <label for="search" class="form-label mb-1">Nama / Email</label>
+                <input type="text" name="search" class="form-control" placeholder="Cari nama/email..." value="{{ request('search') }}">
+            </div>
+            <div class="me-2 mb-2">
+                <label for="from" class="form-label mb-1">Dari Tanggal</label>
+                <input type="date" name="from" class="form-control" value="{{ request('from') }}">
+            </div>
+            <div class="me-2 mb-2">
+                <label for="to" class="form-label mb-1">Sampai Tanggal</label>
+                <input type="date" name="to" class="form-control" value="{{ request('to') }}">
+            </div>
+            <div class="me-2 mb-2">
+                <button type="submit" class="btn btn-outline-primary">Filter</button>
+            </div>
+        </form>
+
+        <div class="mb-2">
+            <label class="form-label mb-1 d-block">&nbsp;</label>
+            <a href="{{ route('admin.transaksi.export', request()->all()) }}" class="btn btn-success">⬇️ Export Excel</a>
         </div>
     </div>
 
@@ -145,9 +159,9 @@
                     <th>Tanggal</th>
                     <th>Nama</th>
                     <th>Email</th>
-                    <th>Telepon</th>
+                
                     <th>Metode</th>
-                    <th>Total</th>
+                    <th>Pembelian</th>
                     <th>Serial Number</th>
                     <th>Status</th>
                     <th>Aksi</th>
@@ -159,9 +173,26 @@
                     <td>{{ $trx->created_at->format('Y-m-d H:i') }}</td>
                     <td>{{ $trx->nama }}</td>
                     <td>{{ $trx->email }}</td>
-                    <td>{{ $trx->telepon }}</td>
+                    
                     <td>{{ $trx->metode_pembayaran }}</td>
-                    <td>Rp{{ number_format($trx->total, 0, ',', '.') }}</td>
+                    <td>
+                        @php
+                            $items = json_decode($trx->items, true);
+                        @endphp
+
+                        @if ($items)
+                            <ul class="mb-0 ps-3">
+                                @foreach ($items as $item)
+                                    <li>
+                                        {{ $item['nama'] }} (Ukuran: {{ $item['ukuran'] }}, Jumlah: {{ $item['jumlah'] }}, 
+                                        Harga: Rp{{ number_format($item['harga'], 0, ',', '.') }})
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @else
+                            <em>Tidak ada item</em>
+                        @endif
+                    </td>
                     <td>{{ $trx->serial_number ?? '-' }}</td>
                     <td>
                         <form method="POST" action="{{ route('admin.transaksi.update', $trx->id) }}">
