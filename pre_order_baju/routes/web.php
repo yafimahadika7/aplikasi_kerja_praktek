@@ -119,5 +119,8 @@ Route::middleware(['auth', 'role:admin,operation'])->prefix('admin')->name('admi
     Route::post('/tiketing/{id}/close', [TiketingController::class, 'close'])->name('tiketing.close');
 });
 
+Route::get('/tracking/{resi}', [App\Http\Controllers\TrackingController::class, 'show'])->name('tracking.show');
+Route::post('/tracking-resi', [App\Http\Controllers\TrackingController::class, 'ajax'])->name('tracking.ajax');
+
 // ✅ Auth default
 require __DIR__.'/auth.php';

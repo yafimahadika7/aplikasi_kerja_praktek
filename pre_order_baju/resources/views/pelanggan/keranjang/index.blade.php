@@ -20,7 +20,6 @@
             opacity: 0;
             animation: fadeInBody 1s ease forwards;
         }
-
         .chat-bubble {
             max-width: 70%;
             padding: 8px 14px;
@@ -46,12 +45,9 @@
             margin-left: auto;
             border-bottom-right-radius: 0;
         }
-
-
         @keyframes fadeInBody {
             to { opacity: 1; }
         }
-
         body::before {
             content: '';
             position: absolute;
@@ -59,7 +55,6 @@
             background-color: rgba(0, 0, 0, 0.5);
             z-index: -1;
         }
-
         .produk-card {
             background-color: rgba(255, 255, 255, 0.95);
             border-radius: 15px;
@@ -70,12 +65,10 @@
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
             animation: fadeInUp 0.6s ease both;
         }
-
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
         }
-
         .produk-img {
             width: 70px;
             height: 70px;
@@ -83,16 +76,13 @@
             border-radius: 10px;
             margin-right: 1rem;
         }
-
         .produk-info {
             text-align: left;
             flex-grow: 1;
         }
-
         .input-group-sm {
             max-width: 120px;
         }
-
         .total-bar {
             position: fixed;
             bottom: 0;
@@ -106,7 +96,6 @@
             border-top: 1px solid #ccc;
             z-index: 100;
         }
-
         .header-container {
             position: fixed;
             top: 0;
@@ -118,7 +107,6 @@
             justify-content: center;
             padding: 1rem;
         }
-
         .back-button {
             position: absolute;
             left: 1rem;
@@ -135,25 +123,21 @@
             gap: 0.5rem;
             text-decoration: none;
         }
-
         .back-button:hover {
             background-color: rgba(255, 255, 255, 0.2);
         }
-
         .main-title {
             font-size: 2rem;
             font-weight: bold;
             color: white;
             margin: 0;
         }
-
         .modal-content {
             color: black;
             background-color: rgba(255, 255, 255, 0.9);
             box-shadow: 0 8px 20px rgba(0,0,0,0.3);
             border-radius: 10px;
         }
-
         .alert-overlay {
             position: fixed;
             top: 0;
@@ -166,7 +150,6 @@
             background-color: rgba(0,0,0,0.5);
             z-index: 1050;
         }
-
         .custom-alert {
             background-color: white;
             padding: 20px 30px;
@@ -176,7 +159,6 @@
             color: black;
             box-shadow: 0 5px 20px rgba(0,0,0,0.3);
         }
-
         .result-alert {
             position: fixed;
             top: 50%;
@@ -201,7 +183,6 @@
         </a>
         <h1 class="main-title">Keranjang Belanja</h1>
     </div>
-
     <div id="keranjangList"></div>
 </div>
 
@@ -256,287 +237,68 @@
     <div class="custom-alert">Keranjang Anda kosong. Silakan pilih produk terlebih dahulu.</div>
 </div>
 
+<!-- RESULT ALERT (Success Popup) -->
+<div id="resultAlert" class="result-alert" style="display:none;"></div>
+
 <!-- Bubble Chat Minimized -->
-    <button id="bubbleChat" class="btn btn-primary rounded-circle shadow position-fixed" 
-            style="bottom: 20px; right: 20px; width: 60px; height: 60px; z-index: 9999;">
+<button id="bubbleChat" class="btn btn-primary rounded-circle shadow position-fixed" 
+        style="bottom: 20px; right: 20px; width: 60px; height: 60px; z-index: 9999;">
     💬
     <span id="notifCount" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
             style="font-size: 0.7rem; display: none;">
         0
     </span>
-    </button>
+</button>
 
-    <!-- Modal Request Komplain -->
-    <div class="modal fade" id="chatRequestModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content text-dark">
-        <div class="modal-header">
-            <h5 class="modal-title">🖐️ Kirim Komplain</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+<!-- Modal Request Komplain -->
+<div class="modal fade" id="chatRequestModal" tabindex="-1">
+<div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content text-dark">
+    <div class="modal-header">
+        <h5 class="modal-title">🖐️ Kirim Komplain</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    </div>
+    <div class="modal-body">
+        <input type="text" id="namaPelanggan" class="form-control mb-2" placeholder="Nama Anda">
+        <input type="text" id="kontakPelanggan" class="form-control mb-2" placeholder="Email atau Nomor HP">
+
+        <h6 class="fw-bold">Pilih Topik Komplain</h6>
+        <div class="d-grid gap-2 mb-3">
+            <button class="btn btn-outline-secondary" onclick="pilihTopik('Barang rusak', event)">Barang rusak</button>
+            <button class="btn btn-outline-secondary" onclick="pilihTopik('Paket belum sampai', event)">Paket belum sampai</button>
+            <button class="btn btn-outline-secondary" onclick="pilihTopik('Barang yang dikirim salah', event)">Barang yang dikirim salah</button>
         </div>
-        <div class="modal-body">
-            <input type="text" id="namaPelanggan" class="form-control mb-2" placeholder="Nama Anda">
-            <input type="text" id="kontakPelanggan" class="form-control mb-2" placeholder="Email atau Nomor HP">
 
-            <h6 class="fw-bold">Pilih Topik Komplain</h6>
-            <div class="d-grid gap-2 mb-3">
-                <button class="btn btn-outline-secondary" onclick="pilihTopik('Barang rusak', event)">Barang rusak</button>
-                <button class="btn btn-outline-secondary" onclick="pilihTopik('Paket belum sampai', event)">Paket belum sampai</button>
-                <button class="btn btn-outline-secondary" onclick="pilihTopik('Barang yang dikirim salah', event)">Barang yang dikirim salah</button>
-            </div>
+        <button id="btnKirimKomplain" class="btn btn-primary w-100" onclick="kirimKomplain()" disabled>Kirim Komplain</button>
+    </div>
+    </div>
+</div>
+</div>
 
-            <button id="btnKirimKomplain" class="btn btn-primary w-100" onclick="kirimKomplain()" disabled>Kirim Komplain</button>
+<!-- Modal Chat Aktif -->
+<div class="modal fade" id="chatModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+<div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content text-dark">
+    <div class="modal-header">
+        <h5 class="modal-title">💬 Chat Komplain</h5>
+        <div class="d-flex gap-2">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
+    </div>
+    <div class="modal-body d-flex flex-column" id="chatModalBody" style="height: 400px;">
+        <div id="chatContainer" class="flex-grow-1 d-flex flex-column mb-3" style="overflow-y: auto;"></div>
+        <div class="input-group">
+        <input type="text" id="inputPesanChat" class="form-control" placeholder="Tulis pesan...">
+        <button class="btn btn-primary" onclick="kirimPesanChat()">Kirim</button>
         </div>
     </div>
     </div>
-
-    <!-- Modal Chat Aktif -->
-    <div class="modal fade" id="chatModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content text-dark">
-        <div class="modal-header">
-            <h5 class="modal-title">💬 Chat Komplain</h5>
-            <div class="d-flex gap-2">
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-        </div>
-        <div class="modal-body d-flex flex-column" id="chatModalBody" style="height: 400px;">
-            <div id="chatContainer" class="flex-grow-1 d-flex flex-column mb-3" style="overflow-y: auto;"></div>
-            <div class="input-group">
-            <input type="text" id="inputPesanChat" class="form-control" placeholder="Tulis pesan...">
-            <button class="btn btn-primary" onclick="kirimPesanChat()">Kirim</button>
-            </div>
-        </div>
-        </div>
-    </div>
-    </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // ========== VARIABEL GLOBAL ==========
-            let selectedProduct = null;
-            let currentProduct = {};
-            let komplainId = localStorage.getItem('komplainId') || null;
-            let intervalId = null;
-            let topikKomplain = null;
-            let isMinimized = localStorage.getItem('chatMinimized') === 'true';
-
-            // ========== CHAT KOMPLAIN ==========
-            document.getElementById('bubbleChat').addEventListener('click', () => {
-                if (komplainId) {
-                    toggleMinimizeChat(); // lanjutkan chat yang sudah ada
-                } else {
-                    topikKomplain = null;
-                    new bootstrap.Modal(document.getElementById('chatRequestModal')).show(); // kirim komplain baru
-                }
-            });
-
-            window.pilihTopik = function(topik, event) {
-                topikKomplain = topik;
-                document.querySelectorAll('.btn-outline-secondary').forEach(btn => btn.classList.remove('active'));
-                event.target.classList.add('active');
-                document.getElementById('btnKirimKomplain').disabled = false;
-            };
-
-            window.kirimKomplain = function () {
-                const nama = document.getElementById('namaPelanggan').value.trim();
-                const kontak = document.getElementById('kontakPelanggan').value.trim();
-
-                console.log('Klik Kirim Komplain');
-                console.log('Nama:', nama);
-                console.log('Kontak:', kontak);
-                console.log('Topik:', topikKomplain);
-
-                if (!nama || !kontak || !topikKomplain) {
-                    alert("Mohon isi semua kolom dan pilih topik.");
-                    return;
-                }
-
-                fetch('/komplain', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: JSON.stringify({
-                        nama,
-                        kontak,
-                        topik: topikKomplain
-                    })
-                })
-                .then(res => res.json())
-                .then(res => {
-                    console.log('Respon dari server:', res);
-
-                    if (res.komplain && res.komplain.id) {
-                        komplainId = res.komplain.id;
-                        localStorage.setItem('komplainId', res.komplain.id);
-                        localStorage.setItem('chatMinimized', 'false');
-
-                        bootstrap.Modal.getInstance(document.getElementById('chatRequestModal')).hide();
-                        new bootstrap.Modal(document.getElementById('chatModal')).show();
-
-                        document.getElementById('bubbleChat').style.display = 'none';
-                        isMinimized = false;
-
-                        loadChat();
-                        mulaiPollingChat();
-                    } else {
-                        alert('Gagal memulai chat komplain.');
-                    }
-                })
-                .catch(err => {
-                    console.error('Gagal kirim komplain:', err);
-                    alert('Terjadi kesalahan saat mengirim komplain.');
-                });
-            };
-
-            window.kirimPesanChat = function () {
-                const teks = document.getElementById('inputPesanChat').value.trim();
-                if (!teks || !komplainId) return;
-
-                fetch(`/komplain/${komplainId}/messages`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: JSON.stringify({ pesan: teks, pengirim: 'pelanggan' })
-                }).then(() => {
-                    document.getElementById('inputPesanChat').value = '';
-                    loadChat();
-                });
-            };
-
-            function loadChat() {
-                if (!komplainId) return;
-                fetch(`/komplain/${komplainId}/messages`)
-                    .then(res => res.json())
-                    .then(data => {
-                        const container = document.getElementById('chatContainer');
-                        container.innerHTML = '';
-
-                        let unreadCount = 0;
-
-                        data.forEach(msg => {
-                            const div = document.createElement('div');
-                            div.className = `chat-bubble ${msg.pengirim === 'pelanggan' ? 'chat-left' : 'chat-right'}`;
-                            div.textContent = msg.pesan;
-                            container.appendChild(div);
-
-                            // hitung pesan dari admin saat chat tidak dibuka
-                            if (msg.pengirim === 'admin' && isMinimized) {
-                                unreadCount++;
-                            }
-                        });
-
-                        // tampilkan badge notifikasi
-                        const notif = document.getElementById('notifCount');
-                        if (unreadCount > 0 && isMinimized) {
-                            notif.textContent = unreadCount;
-                            notif.style.display = 'inline-block';
-                        } else {
-                            notif.style.display = 'none';
-                        }
-
-                        container.scrollTop = container.scrollHeight;
-                    });
-            }
-
-            function mulaiPollingChat() {
-                loadChat();
-                if (intervalId) clearInterval(intervalId);
-                intervalId = setInterval(loadChat, 3000);
-            }
-
-            const chatModalElement = document.getElementById('chatModal');
-            const chatModalInstance = bootstrap.Modal.getOrCreateInstance(chatModalElement);
-            
-            function toggleMinimizeChat() {
-                const bubbleChat = document.getElementById('bubbleChat');
-                const notif = document.getElementById('notifCount');
-
-                if (!isMinimized) {
-                    chatModalInstance.hide();
-                    bubbleChat.style.display = 'block';
-                    isMinimized = true;
-                    localStorage.setItem('chatMinimized', 'true');
-                    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-                } else {
-                    chatModalInstance.show();
-                    bubbleChat.style.display = 'none';
-                    isMinimized = false;
-                    localStorage.setItem('chatMinimized', 'false');
-                    notif.style.display = 'none';
-                }
-            }
-
-            function restoreChatState() {
-                if (!komplainId) return;
-
-                fetch(`/komplain/${komplainId}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.status === 'closed') {
-                            // Jika komplain sudah ditutup di DB
-                            localStorage.removeItem('komplainId');
-                            localStorage.removeItem('chatMinimized');
-                            komplainId = null;
-                            isMinimized = false;
-                            document.getElementById('bubbleChat').style.display = 'none';
-                        } else {
-                            // Komplain masih open, lanjutkan chat
-                            if (isMinimized) {
-                                document.getElementById('bubbleChat').style.display = 'block';
-                            } else {
-                                new bootstrap.Modal(document.getElementById('chatModal')).show();
-                            }
-                            loadChat();
-                            mulaiPollingChat();
-                        }
-                    });
-            }
-
-            restoreChatState();
-
-            // ❌ Tombol close — hanya bersihkan localStorage dan hentikan polling
-            document.querySelector('#chatModal .btn-close')?.addEventListener('click', () => {
-                const bsModal = bootstrap.Modal.getInstance(document.getElementById('chatModal'));
-                bsModal.hide();
-
-                isMinimized = true;
-                localStorage.setItem('chatMinimized', 'true');
-                document.getElementById('bubbleChat').style.display = 'block';
-
-                // Hapus backdrop agar tidak menutupi layar
-                document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-                document.body.classList.remove('modal-open');
-                document.body.style = '';
-            });
-
-
-            // 💬 Tombol minimize dan bubble
-            document.getElementById('btnMinimizeChat').addEventListener('click', toggleMinimizeChat);
-            document.getElementById('bubbleChat').addEventListener('click', () => {
-                if (komplainId) {
-                    toggleMinimizeChat(); // buka/minimize chat
-                } else {
-                    new bootstrap.Modal(document.getElementById('chatRequestModal')).show(); // buka form kirim komplain
-                }
-            });
-
-            // Klik backdrop modal untuk minimize
-            document.getElementById('chatModal').addEventListener('mousedown', function (e) {
-                if (e.target === this && !isMinimized) {
-                    toggleMinimizeChat();
-                }
-            });
-        });
-    </script>
+</div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    // ========== KERANJANG ==========
     const keranjangList = document.getElementById('keranjangList');
     const totalHarga = document.getElementById('totalHarga');
     const customAlert = document.getElementById('customAlert');
@@ -559,10 +321,7 @@
             return;
         }
 
-        let total = 0;
-
         items.forEach((item, index) => {
-            const subtotal = item.harga * item.jumlah;
             const el = document.createElement('div');
             el.className = 'produk-card text-dark';
             el.innerHTML = `
@@ -580,7 +339,6 @@
                 </div>
                 <button class="btn btn-sm btn-danger btn-delete" data-index="${index}">Hapus</button>
             `;
-
             keranjangList.appendChild(el);
         });
 
@@ -590,6 +348,7 @@
         document.querySelectorAll('.btn-delete').forEach(btn => {
             btn.addEventListener('click', e => {
                 const index = parseInt(e.target.getAttribute('data-index'));
+                const items = JSON.parse(localStorage.getItem('keranjang')) || [];
                 items.splice(index, 1);
                 localStorage.setItem('keranjang', JSON.stringify(items));
                 renderKeranjang();
@@ -599,6 +358,7 @@
         document.querySelectorAll('.btn-plus').forEach(btn => {
             btn.addEventListener('click', e => {
                 const index = parseInt(e.target.getAttribute('data-index'));
+                const items = JSON.parse(localStorage.getItem('keranjang')) || [];
                 items[index].jumlah++;
                 localStorage.setItem('keranjang', JSON.stringify(items));
                 renderKeranjang();
@@ -608,6 +368,7 @@
         document.querySelectorAll('.btn-minus').forEach(btn => {
             btn.addEventListener('click', e => {
                 const index = parseInt(e.target.getAttribute('data-index'));
+                const items = JSON.parse(localStorage.getItem('keranjang')) || [];
                 if (items[index].jumlah > 1) {
                     items[index].jumlah--;
                     localStorage.setItem('keranjang', JSON.stringify(items));
@@ -664,13 +425,12 @@
             method: "POST",
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             },
             body: JSON.stringify(data)
         })
         .then(response => response.json())
         .then(result => {
-            // ✅ Tambahkan request ke tes-email (jika diperlukan)
             fetch("http://localhost:8000/tes-email")
                 .then(() => console.log("Tes email dipanggil"));
 
@@ -687,6 +447,209 @@
         .catch(error => {
             console.error("Error:", error);
             alert("Terjadi kesalahan saat memproses transaksi.");
+        });
+    });
+
+    // ========== CHAT KOMPLAIN ==========
+    document.addEventListener('DOMContentLoaded', () => {
+        let selectedProduct = null;
+        let currentProduct = {};
+        let komplainId = localStorage.getItem('komplainId') || null;
+        let intervalId = null;
+        let topikKomplain = null;
+        let isMinimized = localStorage.getItem('chatMinimized') === 'true';
+
+        document.getElementById('bubbleChat').addEventListener('click', () => {
+            if (komplainId) {
+                toggleMinimizeChat(); // lanjutkan chat yang sudah ada
+            } else {
+                topikKomplain = null;
+                new bootstrap.Modal(document.getElementById('chatRequestModal')).show(); // kirim komplain baru
+            }
+        });
+
+        window.pilihTopik = function(topik, event) {
+            topikKomplain = topik;
+            document.querySelectorAll('.btn-outline-secondary').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('btnKirimKomplain').disabled = false;
+        };
+
+        window.kirimKomplain = function () {
+            const nama = document.getElementById('namaPelanggan').value.trim();
+            const kontak = document.getElementById('kontakPelanggan').value.trim();
+
+            if (!nama || !kontak || !topikKomplain) {
+                alert("Mohon isi semua kolom dan pilih topik.");
+                return;
+            }
+
+            fetch('/komplain', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    nama,
+                    kontak,
+                    topik: topikKomplain
+                })
+            })
+            .then(res => res.json())
+            .then(res => {
+                if (res.komplain && res.komplain.id) {
+                    komplainId = res.komplain.id;
+                    localStorage.setItem('komplainId', res.komplain.id);
+                    localStorage.setItem('chatMinimized', 'false');
+
+                    bootstrap.Modal.getInstance(document.getElementById('chatRequestModal')).hide();
+                    new bootstrap.Modal(document.getElementById('chatModal')).show();
+
+                    document.getElementById('bubbleChat').style.display = 'none';
+                    isMinimized = false;
+
+                    loadChat();
+                    mulaiPollingChat();
+                } else {
+                    alert('Gagal memulai chat komplain.');
+                }
+            })
+            .catch(err => {
+                console.error('Gagal kirim komplain:', err);
+                alert('Terjadi kesalahan saat mengirim komplain.');
+            });
+        };
+
+        window.kirimPesanChat = function () {
+            const teks = document.getElementById('inputPesanChat').value.trim();
+            if (!teks || !komplainId) return;
+
+            fetch(`/komplain/${komplainId}/messages`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({ pesan: teks, pengirim: 'pelanggan' })
+            }).then(() => {
+                document.getElementById('inputPesanChat').value = '';
+                loadChat();
+            });
+        };
+
+        function loadChat() {
+            if (!komplainId) return;
+            fetch(`/komplain/${komplainId}/messages`)
+                .then(res => res.json())
+                .then(data => {
+                    const container = document.getElementById('chatContainer');
+                    container.innerHTML = '';
+
+                    let unreadCount = 0;
+
+                    data.forEach(msg => {
+                        const div = document.createElement('div');
+                        div.className = `chat-bubble ${msg.pengirim === 'pelanggan' ? 'chat-left' : 'chat-right'}`;
+                        div.textContent = msg.pesan;
+                        container.appendChild(div);
+
+                        if (msg.pengirim === 'admin' && isMinimized) {
+                            unreadCount++;
+                        }
+                    });
+
+                    const notif = document.getElementById('notifCount');
+                    if (unreadCount > 0 && isMinimized) {
+                        notif.textContent = unreadCount;
+                        notif.style.display = 'inline-block';
+                    } else {
+                        notif.style.display = 'none';
+                    }
+
+                    container.scrollTop = container.scrollHeight;
+                });
+        }
+
+        function mulaiPollingChat() {
+            loadChat();
+            if (intervalId) clearInterval(intervalId);
+            intervalId = setInterval(loadChat, 3000);
+        }
+
+        const chatModalElement = document.getElementById('chatModal');
+        const chatModalInstance = bootstrap.Modal.getOrCreateInstance(chatModalElement);
+        
+        function toggleMinimizeChat() {
+            const bubbleChat = document.getElementById('bubbleChat');
+            const notif = document.getElementById('notifCount');
+
+            if (!isMinimized) {
+                chatModalInstance.hide();
+                bubbleChat.style.display = 'block';
+                isMinimized = true;
+                localStorage.setItem('chatMinimized', 'true');
+                document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+            } else {
+                chatModalInstance.show();
+                bubbleChat.style.display = 'none';
+                isMinimized = false;
+                localStorage.setItem('chatMinimized', 'false');
+                notif.style.display = 'none';
+            }
+        }
+
+        function restoreChatState() {
+            if (!komplainId) return;
+
+            fetch(`/komplain/${komplainId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'closed') {
+                        localStorage.removeItem('komplainId');
+                        localStorage.removeItem('chatMinimized');
+                        komplainId = null;
+                        isMinimized = false;
+                        document.getElementById('bubbleChat').style.display = 'none';
+                    } else {
+                        if (isMinimized) {
+                            document.getElementById('bubbleChat').style.display = 'block';
+                        } else {
+                            new bootstrap.Modal(document.getElementById('chatModal')).show();
+                        }
+                        loadChat();
+                        mulaiPollingChat();
+                    }
+                });
+        }
+
+        restoreChatState();
+
+        document.querySelector('#chatModal .btn-close')?.addEventListener('click', () => {
+            const bsModal = bootstrap.Modal.getInstance(document.getElementById('chatModal'));
+            bsModal.hide();
+
+            isMinimized = true;
+            localStorage.setItem('chatMinimized', 'true');
+            document.getElementById('bubbleChat').style.display = 'block';
+
+            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+            document.body.classList.remove('modal-open');
+            document.body.style = '';
+        });
+
+        document.getElementById('bubbleChat').addEventListener('click', () => {
+            if (komplainId) {
+                toggleMinimizeChat();
+            } else {
+                new bootstrap.Modal(document.getElementById('chatRequestModal')).show();
+            }
+        });
+
+        document.getElementById('chatModal').addEventListener('mousedown', function (e) {
+            if (e.target === this && !isMinimized) {
+                toggleMinimizeChat();
+            }
         });
     });
 </script>

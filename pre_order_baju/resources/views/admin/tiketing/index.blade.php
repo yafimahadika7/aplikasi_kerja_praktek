@@ -2,7 +2,7 @@
     <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <title>Manajemen Produk</title>
+        <title>Manajemen Tiketing</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
         <style>
             body {
@@ -162,7 +162,7 @@
         <!-- Topbar -->
         <div class="topbar" id="topbar">
             <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
-            <span>Manajemen Produk</span>
+            <span>Manajemen Tiketing</span>
         </div>
         
         <!-- Main Content -->
