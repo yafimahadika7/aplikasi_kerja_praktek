@@ -110,7 +110,7 @@
         @endif
 
         @if (Auth::user()->role === 'admin' || Auth::user()->role === 'operation')
-            <a href="#">💬 Tiketing</a>
+            <a href="{{ route('admin.tiketing.index') }}">💬 Tiketing</a>
         @endif
         <form method="POST" action="{{ route('logout') }}">
             @csrf
