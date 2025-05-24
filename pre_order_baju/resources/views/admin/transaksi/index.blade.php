@@ -207,6 +207,7 @@
                                 <option value="proses" {{ $trx->status == 'proses' ? 'selected' : '' }}>Proses</option>
                                 <option value="sukses" {{ $trx->status == 'sukses' ? 'selected' : '' }}>Sukses</option>
                                 <option value="gagal" {{ $trx->status == 'gagal' ? 'selected' : '' }}>Gagal</option>
+                                <option value="retur" {{ $trx->status == 'retur' ? 'selected' : '' }}>Retur</option>
                             </select>
                             <input type="hidden" name="serial_number" value="{{ $trx->serial_number }}">
                         </form>

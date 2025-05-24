@@ -41,7 +41,7 @@ class TransaksiController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:pending,proses,sukses,gagal',
+            'status' => 'required|in:pending,proses,sukses,gagal,retur',
             'serial_number' => 'nullable|string|max:255'
         ]);
         
