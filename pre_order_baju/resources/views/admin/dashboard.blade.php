@@ -110,6 +110,10 @@
             <a href="#">📈 Penjualan</a>
         @endif
 
+        @if (Auth::user()->role === 'admin' || Auth::user()->role === 'operation')
+            <a href="#">💬 Tiketing</a>
+        @endif
+
         <form method="POST" action="{{ route('logout') }}">
             @csrf
             <button type="submit">🚪 Logout</button>

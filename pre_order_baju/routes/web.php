@@ -14,6 +14,10 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Pelanggan\ProdukController as PelangganProdukController;
 use App\Http\Controllers\Pelanggan\CustomController;
 use App\Http\Controllers\TransaksiController;
+use App\Http\Controllers\ChatController;
+use App\Http\Controllers\KomplainController;
+use App\Http\Controllers\KomplainMessageController;
+use App\Http\Controllers\Admin\TiketingController;
 
 use App\Mail\VirtualAccountEmail;
 use App\Mail\ResiPengirimanEmail;
@@ -99,6 +103,20 @@ Route::get('/tes-resi', function () {
     } catch (\Exception $e) {
         return "❌ Gagal kirim email Resi: " . $e->getMessage();
     }
+});
+
+Route::post('/kirim-chat', [ChatController::class, 'store'])->name('chat.store');
+Route::post('/komplain', [KomplainController::class, 'store'])->name('komplain.store');
+Route::get('/komplain/{id}/messages', [KomplainMessageController::class, 'index']);
+Route::post('/komplain/{id}/messages', [KomplainMessageController::class, 'store']);
+Route::post('/komplain/{id}/close', [KomplainController::class, 'close']);
+Route::get('/komplain/{id}', [KomplainController::class, 'show']);
+
+Route::middleware(['auth', 'role:admin,operation'])->prefix('admin')->name('admin.')->group(function() {
+    Route::get('/tiketing', [TiketingController::class, 'index'])->name('tiketing.index');
+    Route::get('/tiketing/{id}', [TiketingController::class, 'show'])->name('tiketing.show');
+    Route::post('/tiketing/{id}/reply', [TiketingController::class, 'reply'])->name('tiketing.reply');
+    Route::post('/tiketing/{id}/close', [TiketingController::class, 'close'])->name('tiketing.close');
 });
 
 // ✅ Auth default

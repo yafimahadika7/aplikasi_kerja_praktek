@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Our Products</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <style>
@@ -118,23 +119,34 @@
             margin: auto;
         }
 
-        .product-card img {
+        /* .product-card img {
             width: 100%;
             height: 240px;
             object-fit: contain;
             border-radius: 8px 8px 0 0;
-        }
+        } */
 
         .card-body {
-            padding: 10px;
-            color: black;
+            min-height: 160px; /* agar tinggi konten sama */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card-title {
+            min-height: 48px; /* sesuai tinggi 2 baris */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2; 
+            -webkit-box-orient: vertical;
         }
 
         .btn-group-modern {
+            margin-top: auto;
             display: flex;
-            justify-content: space-between;
-            gap: 8px;
-            margin-top: 10px;
+            gap: 6px;
+            justify-content: center;
         }
 
         .btn-modern {
@@ -155,6 +167,17 @@
             box-shadow: 0 6px 12px rgba(220,53,69,0.4);
         }
 
+        .product-card img {
+            width: 100%;
+            height: 220px; /* pastikan semua gambar sama tinggi */
+            object-fit: cover; /* crop agar proporsional */
+            border-radius: 8px 8px 0 0;
+        }
+
+        .text-justify {
+            text-align: justify;
+        }
+
         .result-alert {
             position: fixed;
             top: 50%;
@@ -167,6 +190,34 @@
             box-shadow: 0 8px 30px rgba(0,0,0,0.3);
             z-index: 1100;
             text-align: center;
+        }
+
+        .chat-bubble {
+            max-width: 70%;
+            padding: 8px 14px;
+            margin-bottom: 10px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.4;
+            word-wrap: break-word;
+            display: inline-block;
+        }
+
+        .chat-left {
+            background-color: #e4e6eb;
+            color: #000;
+            align-self: flex-start;
+            text-align: left;
+            border-bottom-left-radius: 0;
+        }
+
+        .chat-right {
+            background-color: #007bff;
+            color: #fff;
+            align-self: flex-end;
+            text-align: right;
+            margin-left: auto;
+            border-bottom-right-radius: 0;
         }
     </style>
     </style>
@@ -224,6 +275,7 @@
                                         data-nama="{{ $item->nama }}"
                                         data-harga="{{ $item->harga }}"
                                         data-gambar="{{ asset('storage/' . $item->gambar) }}"
+                                        data-deskripsi="{{ $item->deskripsi }}"
                                         data-ukuran="All Size">
                                     Beli
                                 </button>
@@ -261,6 +313,7 @@
         <img id="previewBeliGambar" src="" class="img-fluid me-md-4 mb-3 mb-md-0" style="max-width: 250px;">
         <div class="flex-grow-1 text-dark">
           <h5 id="previewBeliNama"></h5>
+          <p id="previewBeliDeskripsi" class="text-muted small text-justify"></p>
           <div class="mb-3">
             <label class="form-label">Ukuran</label>
             <select id="pilihUkuran" class="form-select">
@@ -282,19 +335,76 @@
   </div>
 </div>
 
+    <!-- Modal Request Komplain -->
+    <div class="modal fade" id="chatRequestModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content text-dark">
+        <div class="modal-header">
+            <h5 class="modal-title">🖐️ Kirim Komplain</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+            <input type="text" id="namaPelanggan" class="form-control mb-2" placeholder="Nama Anda">
+            <input type="text" id="kontakPelanggan" class="form-control mb-2" placeholder="Email atau Nomor HP">
+
+            <h6 class="fw-bold">Pilih Topik Komplain</h6>
+            <div class="d-grid gap-2 mb-3">
+                <button class="btn btn-outline-secondary" onclick="pilihTopik('Barang rusak', event)">Barang rusak</button>
+                <button class="btn btn-outline-secondary" onclick="pilihTopik('Paket belum sampai', event)">Paket belum sampai</button>
+                <button class="btn btn-outline-secondary" onclick="pilihTopik('Barang yang dikirim salah', event)">Barang yang dikirim salah</button>
+            </div>
+
+            <button id="btnKirimKomplain" class="btn btn-primary w-100" onclick="kirimKomplain()" disabled>Kirim Komplain</button>
+        </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Modal Chat Aktif -->
+    <div class="modal fade" id="chatModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content text-dark">
+        <div class="modal-header">
+            <h5 class="modal-title">💬 Chat Komplain</h5>
+            <div class="d-flex gap-2">
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+        </div>
+        <div class="modal-body d-flex flex-column" id="chatModalBody" style="height: 400px;">
+            <div id="chatContainer" class="flex-grow-1 d-flex flex-column mb-3" style="overflow-y: auto;"></div>
+            <div class="input-group">
+            <input type="text" id="inputPesanChat" class="form-control" placeholder="Tulis pesan...">
+            <button class="btn btn-primary" onclick="kirimPesanChat()">Kirim</button>
+            </div>
+        </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Bubble Chat Minimized -->
+    <button id="bubbleChat" class="btn btn-primary rounded-circle shadow position-fixed" 
+            style="bottom: 20px; right: 20px; width: 60px; height: 60px; z-index: 9999;">
+    💬
+    <span id="notifCount" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+            style="font-size: 0.7rem; display: none;">
+        0
+    </span>
+    </button>
+
 <!-- Modal Tambah Keranjang -->
 <div class="modal fade" id="modalKeranjang" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Tambah ke Keranjang</h5>
+                <h5 class="modal-title text-dark">Pilih Ukuran & Jumlah</h5>
+                
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body d-flex flex-column flex-md-row align-items-start">
                 <img id="previewImage" src="" class="img-fluid me-md-4 mb-3 mb-md-0" style="max-width: 250px;">
                 <div class="flex-grow-1">
                     <h5 id="previewNama" class="text-dark fw-bold"></h5>
-                    <p id="previewDeskripsi" class="text-muted small"></p>
+                    <p id="previewDeskripsi" class="text-muted small text-justify"></p>
                     <div class="mb-3">
                         <label for="inputUkuran" class="form-label">Ukuran</label>
                         <select id="inputUkuran" class="form-select">
@@ -368,62 +478,61 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-let selectedProduct = null;
+document.addEventListener('DOMContentLoaded', () => {
+    // ========== VARIABEL GLOBAL ==========
+    let selectedProduct = null;
+    let currentProduct = {};
+    let komplainId = localStorage.getItem('komplainId') || null;
+    let intervalId = null;
+    let topikKomplain = null;
+    let isMinimized = localStorage.getItem('chatMinimized') === 'true';
 
-document.querySelectorAll('.btn-beli').forEach(btn => {
-    btn.addEventListener('click', () => {
-        selectedProduct = {
-            nama: btn.dataset.nama,
-            harga: parseInt(btn.dataset.harga),
-            gambar: btn.dataset.gambar
-        };
+    // ========== PRODUK ==========
+    document.querySelectorAll('.btn-beli').forEach(btn => {
+        btn.addEventListener('click', () => {
+            selectedProduct = {
+                nama: btn.dataset.nama,
+                harga: parseInt(btn.dataset.harga),
+                gambar: btn.dataset.gambar,
+                deskripsi: btn.dataset.deskripsi
+            };
 
-        // Tampilkan ke modal
-        document.getElementById('previewBeliGambar').src = selectedProduct.gambar;
-        document.getElementById('previewBeliNama').innerText = selectedProduct.nama;
+            document.getElementById('previewBeliGambar').src = selectedProduct.gambar;
+            document.getElementById('previewBeliNama').innerText = selectedProduct.nama;
+            document.getElementById('previewBeliDeskripsi').innerText = selectedProduct.deskripsi || '-';
 
-        const modalUkuran = new bootstrap.Modal(document.getElementById('modalUkuranJumlah'));
-        modalUkuran.show();
+            new bootstrap.Modal(document.getElementById('modalUkuranJumlah')).show();
+        });
     });
-});
 
-document.getElementById('lanjutIsiData').addEventListener('click', () => {
-    selectedProduct.ukuran = document.getElementById('pilihUkuran').value;
-    selectedProduct.jumlah = parseInt(document.getElementById('jumlahProduk').value);
+    document.getElementById('lanjutIsiData').addEventListener('click', () => {
+        selectedProduct.ukuran = document.getElementById('pilihUkuran').value;
+        selectedProduct.jumlah = parseInt(document.getElementById('jumlahProduk').value);
 
-    const modalUkuran = bootstrap.Modal.getInstance(document.getElementById('modalUkuranJumlah'));
-    modalUkuran.hide();
+        bootstrap.Modal.getInstance(document.getElementById('modalUkuranJumlah')).hide();
+        new bootstrap.Modal(document.getElementById('checkoutModal')).show();
+    });
 
-    const modalCheckout = new bootstrap.Modal(document.getElementById('checkoutModal'));
-    modalCheckout.show();
-});
+    document.getElementById('checkoutForm').addEventListener('submit', function (e) {
+        e.preventDefault();
 
-document.getElementById('checkoutForm').addEventListener('submit', function(e) {
-    e.preventDefault();
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => data[key] = value);
 
-    const formData = new FormData(this);
-    const data = {};
-    formData.forEach((value, key) => data[key] = value);
+        data.items = [selectedProduct];
+        data.total = selectedProduct.harga * selectedProduct.jumlah;
 
-    data.items = [selectedProduct];
-    data.total = selectedProduct.harga * selectedProduct.jumlah;
-
-    fetch("/transaksi", {
-        method: "POST",
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
-    .then(result => {
-        document.getElementById('vaNumber').innerText = result.va_number;
-        document.getElementById('expiredAt').innerText = result.expired_at;
-        document.getElementById('resultAlert').style.display = 'block';
-        fetch("http://localhost:8000/tes-email")
-                .then(() => console.log("Tes email dipanggil"));
-
+        fetch("/transaksi", {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
             const alertBox = document.getElementById('resultAlert');
             alertBox.innerHTML = `
                 <h5 class="text-success">Transaksi berhasil!</h5>
@@ -432,18 +541,17 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
                 <button class="btn btn-sm btn-primary mt-2" onclick="window.location.href='/produk'">OK</button>
             `;
             alertBox.style.display = 'block';
-    })
-    .catch(error => {
-        console.error("Error:", error);
-        alert("Terjadi kesalahan saat transaksi.");
+            fetch("/tes-email");
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            alert("Terjadi kesalahan saat transaksi.");
+        });
     });
-});
-</script>
 
-<script>
+    // ========== KERANJANG ==========
     const keranjangButtons = document.querySelectorAll('.btn-keranjang');
-    const modal = new bootstrap.Modal(document.getElementById('modalKeranjang'));
-    let currentProduct = {};
+    const modalKeranjang = new bootstrap.Modal(document.getElementById('modalKeranjang'));
 
     keranjangButtons.forEach(button => {
         button.addEventListener('click', function () {
@@ -462,7 +570,7 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
             document.getElementById('inputUkuran').value = 'All Size';
             document.getElementById('inputJumlah').value = 1;
 
-            modal.show();
+            modalKeranjang.show();
         });
     });
 
@@ -480,11 +588,224 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
         }
 
         localStorage.setItem('keranjang', JSON.stringify(keranjang));
-        modal.hide();
-        const toast = new bootstrap.Toast(document.getElementById('toastSuccess'));
-        toast.show();
+        modalKeranjang.hide();
+        new bootstrap.Toast(document.getElementById('toastSuccess')).show();
     });
+
+    // ========== CHAT KOMPLAIN ==========
+
+    document.getElementById('bubbleChat').addEventListener('click', () => {
+        if (komplainId) {
+            toggleMinimizeChat(); // lanjutkan chat yang sudah ada
+        } else {
+            topikKomplain = null;
+            new bootstrap.Modal(document.getElementById('chatRequestModal')).show(); // kirim komplain baru
+        }
+    });
+
+    window.pilihTopik = function(topik, event) {
+        topikKomplain = topik;
+        document.querySelectorAll('.btn-outline-secondary').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        document.getElementById('btnKirimKomplain').disabled = false;
+    };
+
+    window.kirimKomplain = function () {
+        const nama = document.getElementById('namaPelanggan').value.trim();
+        const kontak = document.getElementById('kontakPelanggan').value.trim();
+
+        console.log('Klik Kirim Komplain');
+        console.log('Nama:', nama);
+        console.log('Kontak:', kontak);
+        console.log('Topik:', topikKomplain);
+
+        if (!nama || !kontak || !topikKomplain) {
+            alert("Mohon isi semua kolom dan pilih topik.");
+            return;
+        }
+
+        fetch('/komplain', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({
+                nama,
+                kontak,
+                topik: topikKomplain
+            })
+        })
+        .then(res => res.json())
+        .then(res => {
+            console.log('Respon dari server:', res);
+
+            if (res.komplain && res.komplain.id) {
+                komplainId = res.komplain.id;
+                localStorage.setItem('komplainId', res.komplain.id);
+                localStorage.setItem('chatMinimized', 'false');
+
+                bootstrap.Modal.getInstance(document.getElementById('chatRequestModal')).hide();
+                new bootstrap.Modal(document.getElementById('chatModal')).show();
+
+                document.getElementById('bubbleChat').style.display = 'none';
+                isMinimized = false;
+
+                loadChat();
+                mulaiPollingChat();
+            } else {
+                alert('Gagal memulai chat komplain.');
+            }
+        })
+        .catch(err => {
+            console.error('Gagal kirim komplain:', err);
+            alert('Terjadi kesalahan saat mengirim komplain.');
+        });
+    };
+
+    window.kirimPesanChat = function () {
+        const teks = document.getElementById('inputPesanChat').value.trim();
+        if (!teks || !komplainId) return;
+
+        fetch(`/komplain/${komplainId}/messages`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({ pesan: teks, pengirim: 'pelanggan' })
+        }).then(() => {
+            document.getElementById('inputPesanChat').value = '';
+            loadChat();
+        });
+    };
+
+    function loadChat() {
+        if (!komplainId) return;
+        fetch(`/komplain/${komplainId}/messages`)
+            .then(res => res.json())
+            .then(data => {
+                const container = document.getElementById('chatContainer');
+                container.innerHTML = '';
+
+                let unreadCount = 0;
+
+                data.forEach(msg => {
+                    const div = document.createElement('div');
+                    div.className = `chat-bubble ${msg.pengirim === 'pelanggan' ? 'chat-left' : 'chat-right'}`;
+                    div.textContent = msg.pesan;
+                    container.appendChild(div);
+
+                    // hitung pesan dari admin saat chat tidak dibuka
+                    if (msg.pengirim === 'admin' && isMinimized) {
+                        unreadCount++;
+                    }
+                });
+
+                // tampilkan badge notifikasi
+                const notif = document.getElementById('notifCount');
+                if (unreadCount > 0 && isMinimized) {
+                    notif.textContent = unreadCount;
+                    notif.style.display = 'inline-block';
+                } else {
+                    notif.style.display = 'none';
+                }
+
+                container.scrollTop = container.scrollHeight;
+            });
+    }
+
+    function mulaiPollingChat() {
+        loadChat();
+        if (intervalId) clearInterval(intervalId);
+        intervalId = setInterval(loadChat, 3000);
+    }
+
+    const chatModalElement = document.getElementById('chatModal');
+    const chatModalInstance = bootstrap.Modal.getOrCreateInstance(chatModalElement);
+    
+    function toggleMinimizeChat() {
+        const bubbleChat = document.getElementById('bubbleChat');
+        const notif = document.getElementById('notifCount');
+
+        if (!isMinimized) {
+            chatModalInstance.hide();
+            bubbleChat.style.display = 'block';
+            isMinimized = true;
+            localStorage.setItem('chatMinimized', 'true');
+            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+        } else {
+            chatModalInstance.show();
+            bubbleChat.style.display = 'none';
+            isMinimized = false;
+            localStorage.setItem('chatMinimized', 'false');
+            notif.style.display = 'none';
+        }
+    }
+
+    function restoreChatState() {
+        if (!komplainId) return;
+
+        fetch(`/komplain/${komplainId}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'closed') {
+                    // Jika komplain sudah ditutup di DB
+                    localStorage.removeItem('komplainId');
+                    localStorage.removeItem('chatMinimized');
+                    komplainId = null;
+                    isMinimized = false;
+                    document.getElementById('bubbleChat').style.display = 'none';
+                } else {
+                    // Komplain masih open, lanjutkan chat
+                    if (isMinimized) {
+                        document.getElementById('bubbleChat').style.display = 'block';
+                    } else {
+                        new bootstrap.Modal(document.getElementById('chatModal')).show();
+                    }
+                    loadChat();
+                    mulaiPollingChat();
+                }
+            });
+    }
+
+    restoreChatState();
+
+    // ❌ Tombol close — hanya bersihkan localStorage dan hentikan polling
+    document.querySelector('#chatModal .btn-close')?.addEventListener('click', () => {
+        const bsModal = bootstrap.Modal.getInstance(document.getElementById('chatModal'));
+        bsModal.hide();
+
+        isMinimized = true;
+        localStorage.setItem('chatMinimized', 'true');
+        document.getElementById('bubbleChat').style.display = 'block';
+
+        // Hapus backdrop agar tidak menutupi layar
+        document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+        document.body.classList.remove('modal-open');
+        document.body.style = '';
+    });
+
+
+    // 💬 Tombol minimize dan bubble
+    document.getElementById('btnMinimizeChat').addEventListener('click', toggleMinimizeChat);
+    document.getElementById('bubbleChat').addEventListener('click', () => {
+        if (komplainId) {
+            toggleMinimizeChat(); // buka/minimize chat
+        } else {
+            new bootstrap.Modal(document.getElementById('chatRequestModal')).show(); // buka form kirim komplain
+        }
+    });
+
+    // Klik backdrop modal untuk minimize
+    document.getElementById('chatModal').addEventListener('mousedown', function (e) {
+        if (e.target === this && !isMinimized) {
+            toggleMinimizeChat();
+        }
+    });
+});
 </script>
+
 <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
     <div id="toastSuccess" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="3000">
         <div class="d-flex">
