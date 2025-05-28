@@ -20,7 +20,7 @@ use App\Http\Controllers\KomplainController;
 use App\Http\Controllers\KomplainMessageController;
 use App\Http\Controllers\Admin\TiketingController;
 use App\Http\Controllers\Admin\TransaksiItemController;
-
+use App\Http\Controllers\TrackingController;
 use App\Mail\VirtualAccountEmail;
 use App\Mail\ResiPengirimanEmail;
 use App\Models\Transaksi;
@@ -126,5 +126,6 @@ Route::post('/tracking-resi', [App\Http\Controllers\TrackingController::class, '
 Route::post('/checkout', [\App\Http\Controllers\Pelanggan\CheckoutController::class, 'store'])->name('checkout.store');
 Route::post('/admin/transaksi/item/{id}/update', [AdminTransaksiController::class, 'updateItem'])->name('admin.transaksi.item.update');
 Route::post('/admin/transaksi/{id}/kirim-resi', [AdminTransaksiController::class, 'kirimResi'])->name('admin.transaksi.kirimResi');
+Route::post('/pesanan-diterima', [TrackingController::class, 'pesananDiterima'])->name('pesanan.diterima');
 // ✅ Auth default
 require __DIR__.'/auth.php';

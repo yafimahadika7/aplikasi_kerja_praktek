@@ -295,7 +295,7 @@
         </div>
     </div>
 
-    <!-- Modal Tracking Resi -->
+    <!-- Modal 1: Input Nomor Resi -->
     <div class="modal fade" id="modalTracking" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content text-dark">
@@ -304,24 +304,34 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="inputResi" class="form-label">Masukkan Nomor Resi JNE</label>
-                        <input type="text" id="inputResi" class="form-control" placeholder="Contoh: 010111234567890">
-                    </div>
-                    <button id="btnLacak" class="btn btn-primary w-100 mb-3">Lacak</button>
+                    <label for="inputResi" class="form-label">Masukkan Nomor Resi JNE</label>
+                    <input type="text" id="inputResi" class="form-control" placeholder="Contoh: 010111234567890">
+                    <button id="btnLacak" class="btn btn-primary w-100 mt-3">Lacak</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                    <!-- Hasil tracking -->
-                    <div id="trackingResult" style="display: none;">
-                        <hr>
-                        <p><strong>Status:</strong> <span id="trackingStatus"></span></p>
-                        <p><strong>Pengirim:</strong> <span id="trackingShipper"></span></p>
-                        <p><strong>Penerima:</strong> <span id="trackingReceiver"></span></p>
-                        <p><strong>Alamat:</strong> <span id="trackingAddress"></span></p>
-                        <h6 class="mt-3">Riwayat Pengiriman:</h6>
-                        <ul id="trackingHistory" class="list-group small"></ul>
-                    </div>
+    <!-- Modal 2: Detail Tracking -->
+    <div class="modal fade" id="modalTrackingDetail" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content text-dark">
+                <div class="modal-header">
+                    <h5 class="modal-title">📦 Detail Pengiriman</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
 
-                    <div id="trackingError" class="alert alert-danger mt-3" style="display: none;"></div>
+                    <p><strong>Status:</strong> <span id="trackingStatus"></span></p>
+                    <p><strong>No. Resi:</strong> <span id="trackingResi"></span></p>
+
+                    <h6 class="mt-4">Riwayat Pengiriman:</h6>
+                    <ul id="trackingTimeline" class="list-group small"></ul>
+
+                    <button class="btn btn-success mt-4 w-100" id="btnPesananDiterima">
+                        ✅ Pesanan Diterima
+                    </button>
+
                 </div>
             </div>
         </div>
@@ -901,53 +911,77 @@
     </script>
 
     <script>
-        document.getElementById('btnLacak').addEventListener('click', function () {
-            const resi = document.getElementById('inputResi').value.trim();
-            if (!resi) return alert("Nomor resi tidak boleh kosong");
+        document.addEventListener('DOMContentLoaded', function () {
+            const btnLacak = document.getElementById('btnLacak');
+            if (!btnLacak) return;
 
-            fetch("{{ route('tracking.ajax') }}", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
-                },
-                body: JSON.stringify({ resi: resi })
-            })
-                .then(res => res.json())
-                .then(data => {
-                    const result = data.data;
-                    if (data.status !== 200) {
-                        document.getElementById('trackingResult').style.display = 'none';
-                        document.getElementById('trackingError').innerText = data.message || 'Resi tidak ditemukan';
-                        document.getElementById('trackingError').style.display = 'block';
-                        return;
-                    }
+            btnLacak.addEventListener('click', function () {
+                const resi = document.getElementById('inputResi').value.trim();
+                if (!resi) return alert("Nomor resi tidak boleh kosong");
 
-                    document.getElementById('trackingStatus').innerText = result.summary.status;
-                    document.getElementById('trackingShipper').innerText = result.detail.shipper;
-                    document.getElementById('trackingReceiver').innerText = result.detail.receiver;
-                    document.getElementById('trackingAddress').innerText = result.detail.destination;
-
-                    const historyList = document.getElementById('trackingHistory');
-                    historyList.innerHTML = '';
-                    result.history.forEach(item => {
-                        const li = document.createElement('li');
-                        li.className = 'list-group-item';
-                        li.innerHTML = `<strong>${item.date}</strong> - ${item.desc}`;
-                        historyList.appendChild(li);
-                    });
-
-                    document.getElementById('trackingError').style.display = 'none';
-                    document.getElementById('trackingResult').style.display = 'block';
+                fetch("{{ route('tracking.ajax') }}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": document.querySelector('meta[name=\"csrf-token\"]').content
+                    },
+                    body: JSON.stringify({ resi: resi })
                 })
-                .catch(() => {
-                    document.getElementById('trackingResult').style.display = 'none';
-                    document.getElementById('trackingError').innerText = 'Terjadi kesalahan.';
-                    document.getElementById('trackingError').style.display = 'block';
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status !== 200) {
+                            alert(data.message || "Resi tidak ditemukan.");
+                            return;
+                        }
+
+                        const result = data.data;
+                        document.getElementById('trackingStatus').innerText = result.summary.status;
+                        document.getElementById('trackingResi').innerText = resi;
+
+                        const timeline = document.getElementById('trackingTimeline');
+                        timeline.innerHTML = '';
+                        result.history.forEach((item, index) => {
+                            const li = document.createElement('li');
+                            li.className = 'list-group-item';
+                            const dot = index === 0 ? '🟢' : '⚪';
+                            li.innerHTML = `<strong>${dot} ${item.date}</strong><br>${item.desc}`;
+                            timeline.appendChild(li);
+                        });
+
+                        const modalInput = bootstrap.Modal.getInstance(document.getElementById('modalTracking'));
+                        modalInput.hide();
+                        new bootstrap.Modal(document.getElementById('modalTrackingDetail')).show();
+                    })
+                    .catch(() => {
+                        alert("Terjadi kesalahan saat memproses permintaan.");
+                    });
+            });
+
+            // tombol "Pesanan Diterima"
+            const btnDiterima = document.getElementById('btnPesananDiterima');
+            if (btnDiterima) {
+                btnDiterima.addEventListener('click', function () {
+                    const resi = document.getElementById('trackingResi').innerText;
+                    fetch("{{ route('pesanan.diterima') }}", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRF-TOKEN": document.querySelector('meta[name=\"csrf-token\"]').content
+                        },
+                        body: JSON.stringify({ no_resi: resi })
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            alert(data.success ? "Pesanan dikonfirmasi." : "Gagal: " + data.message);
+                            bootstrap.Modal.getInstance(document.getElementById('modalTrackingDetail')).hide();
+                        })
+                        .catch(() => {
+                            alert("Gagal mengirim konfirmasi.");
+                        });
                 });
+            }
         });
     </script>
-
 
     <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
         <div id="toastSuccess" class="toast align-items-center text-bg-success border-0" role="alert"
