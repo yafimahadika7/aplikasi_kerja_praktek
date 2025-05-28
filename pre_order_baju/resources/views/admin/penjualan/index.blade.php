@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Manajemen Penjualan</title>
@@ -11,6 +12,7 @@
             padding: 0;
             overflow-x: hidden;
         }
+
         .sidebar {
             height: 100vh;
             width: 220px;
@@ -23,10 +25,13 @@
             transition: all 0.3s ease;
             z-index: 1000;
         }
+
         .sidebar.hide {
             left: -220px;
         }
-        .sidebar a, .sidebar form button {
+
+        .sidebar a,
+        .sidebar form button {
             color: white;
             padding: 10px 20px;
             display: block;
@@ -36,9 +41,12 @@
             text-align: left;
             width: 100%;
         }
-        .sidebar a:hover, .sidebar form button:hover {
+
+        .sidebar a:hover,
+        .sidebar form button:hover {
             background-color: #495057;
         }
+
         .topbar {
             height: 60px;
             background-color: #f8f9fa;
@@ -49,36 +57,45 @@
             margin-left: 220px;
             transition: margin-left 0.3s ease;
         }
+
         .topbar.collapsed {
             margin-left: 0;
         }
+
         .content {
             margin-left: 220px;
             padding: 2rem;
             transition: margin-left 0.3s ease;
         }
+
         .content.collapsed {
             margin-left: 0;
         }
+
         .toggle-btn {
             font-size: 24px;
             background: none;
             border: none;
             cursor: pointer;
         }
+
         @media (max-width: 768px) {
             .sidebar {
                 left: -220px;
             }
+
             .sidebar.show {
                 left: 0;
             }
-            .topbar, .content {
+
+            .topbar,
+            .content {
                 margin-left: 0 !important;
             }
         }
     </style>
 </head>
+
 <body>
 
     <!-- Sidebar -->
@@ -141,13 +158,15 @@
                 </div>
                 <div class="me-2 mb-2">
                     <label for="search" class="form-label mb-1">Nama / Email</label>
-                    <input type="text" name="search" id="search" class="form-control" placeholder="Cari nama/email..." value="{{ request('search') }}">
+                    <input type="text" name="search" id="search" class="form-control" placeholder="Cari nama/email..."
+                        value="{{ request('search') }}">
                 </div>
                 <div class="me-2 mb-2">
                     <button type="submit" class="btn btn-outline-primary">Filter</button>
                 </div>
                 <div class="mb-2">
-                    <a href="{{ route('admin.penjualan.export', request()->all()) }}" class="btn btn-success">⬇️ Export Excel</a>
+                    <a href="{{ route('admin.penjualan.export', request()->all()) }}" class="btn btn-success">⬇️ Export
+                        Excel</a>
                 </div>
             </form>
         </div>
@@ -206,4 +225,5 @@
     </script>
 
 </body>
+
 </html>

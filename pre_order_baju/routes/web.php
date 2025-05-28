@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\Request;
 
+
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ProdukController as AdminProdukController;
@@ -18,6 +19,7 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\KomplainController;
 use App\Http\Controllers\KomplainMessageController;
 use App\Http\Controllers\Admin\TiketingController;
+use App\Http\Controllers\Admin\TransaksiItemController;
 
 use App\Mail\VirtualAccountEmail;
 use App\Mail\ResiPengirimanEmail;
@@ -121,6 +123,8 @@ Route::middleware(['auth', 'role:admin,operation'])->prefix('admin')->name('admi
 
 Route::get('/tracking/{resi}', [App\Http\Controllers\TrackingController::class, 'show'])->name('tracking.show');
 Route::post('/tracking-resi', [App\Http\Controllers\TrackingController::class, 'ajax'])->name('tracking.ajax');
-
+Route::post('/checkout', [\App\Http\Controllers\Pelanggan\CheckoutController::class, 'store'])->name('checkout.store');
+Route::post('/admin/transaksi/item/{id}/update', [AdminTransaksiController::class, 'updateItem'])->name('admin.transaksi.item.update');
+Route::post('/admin/transaksi/{id}/kirim-resi', [AdminTransaksiController::class, 'kirimResi'])->name('admin.transaksi.kirimResi');
 // ✅ Auth default
 require __DIR__.'/auth.php';

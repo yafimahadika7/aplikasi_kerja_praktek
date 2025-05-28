@@ -7,26 +7,34 @@ use Illuminate\Http\Request;
 use App\Models\Transaksi;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\PenjualanExport;
+use Carbon\Carbon;
 
 class PenjualanController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Transaksi::where('status', 'sukses');
+        $query = Transaksi::query();
 
+        // Filter status hanya 'sukses'
+        $query->where('status', 'sukses');
+
+        // Filter pencarian nama atau email
         if ($request->filled('search')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('nama', 'like', '%' . $request->search . '%')
-                ->orWhere('email', 'like', '%' . $request->search . '%');
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('nama', 'like', '%' . $search . '%')
+                  ->orWhere('email', 'like', '%' . $search . '%');
             });
         }
 
+        // Filter rentang tanggal
         if ($request->filled('from') && $request->filled('to')) {
-            $from = $request->from . ' 00:00:00';
-            $to   = $request->to   . ' 23:59:59';
+            $from = Carbon::parse($request->from)->startOfDay();
+            $to = Carbon::parse($request->to)->endOfDay();
             $query->whereBetween('created_at', [$from, $to]);
         }
 
+        // Ambil data dan tampilkan
         $transaksis = $query->latest()->get();
 
         return view('admin.penjualan.index', compact('transaksis'));

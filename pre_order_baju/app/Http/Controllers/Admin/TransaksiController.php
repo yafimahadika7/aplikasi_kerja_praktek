@@ -5,11 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Transaksi;
 use Illuminate\Http\Request;
-use Carbon\Carbon;
-use App\Mail\VirtualAccountMail;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Carbon\Carbon;
 use App\Mail\VirtualAccountEmail;
 use App\Mail\ResiPengirimanEmail;
+use Illuminate\Support\Str;
 
 class TransaksiController extends Controller
 {
@@ -19,10 +20,10 @@ class TransaksiController extends Controller
 
         // Filter pencarian (nama, email, va_number)
         if ($search = $request->search) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('nama', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('va_number', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('va_number', 'like', "%{$search}%");
             });
         }
 
@@ -38,21 +39,27 @@ class TransaksiController extends Controller
         return view('admin.transaksi.index', compact('transaksis'));
     }
 
+    public function edit($id)
+    {
+        $transaksi = Transaksi::findOrFail($id);
+        $items = DB::table('transaksi_items')->where('transaksi_id', $id)->get();
+        return view('admin.transaksi.edit', compact('transaksi', 'items'));
+    }
+
     public function update(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:pending,proses,sukses,gagal,retur',
-            'serial_number' => 'nullable|string|max:255'
+            'status' => 'required|in:pending,proses,sukses,gagal,retur'
         ]);
-        
-        $transaksi = \App\Models\Transaksi::findOrFail($id);
+
+        $transaksi = Transaksi::findOrFail($id);
         $statusLama = $transaksi->status;
-        
+
         $transaksi->status = $request->status;
-        $transaksi->serial_number = $request->serial_number; // ✅ ini penting
         $transaksi->save();
 
-        if ($request->status === 'proses' && $statusLama !== 'proses' && $transaksi->serial_number) {
+        // Kirim email jika status berubah ke 'proses'
+        if ($request->status === 'proses' && $statusLama !== 'proses') {
             try {
                 Mail::to($transaksi->email)->send(new ResiPengirimanEmail($transaksi));
             } catch (\Exception $e) {
@@ -60,13 +67,71 @@ class TransaksiController extends Controller
             }
         }
 
-        return redirect()->route('admin.transaksi.index')->with('success', 'Transaksi diperbarui.');
+        return redirect()->route('admin.transaksi.index')->with('success', 'Status transaksi diperbarui.');
     }
 
-    public function edit($id)
+    public function updateItem(Request $request, $itemId)
     {
-        $transaksi = \App\Models\Transaksi::findOrFail($id);
-        return view('admin.transaksi.edit', compact('transaksi'));
+        $request->validate([
+            'serial_number' => 'nullable|string|max:255',
+            'nomor_resi' => 'nullable|string|max:255',
+            'status' => 'required|in:pending,proses,sukses,gagal,retur',
+        ]);
+
+        // Update item
+        DB::table('transaksi_items')->where('id', $itemId)->update([
+            'serial_number' => $request->serial_number,
+            'nomor_resi' => $request->nomor_resi,
+            'status' => $request->status,
+            'updated_at' => now(),
+        ]);
+
+        $transaksiId = DB::table('transaksi_items')->where('id', $itemId)->value('transaksi_id');
+
+        $statuses = DB::table('transaksi_items')
+            ->where('transaksi_id', $transaksiId)
+            ->pluck('status')
+            ->toArray();
+
+        // Cek status dengan prioritas
+        if (in_array('pending', $statuses)) {
+            $finalStatus = 'pending';
+        } elseif (in_array('proses', $statuses)) {
+            $finalStatus = 'proses';
+        } elseif (in_array('gagal', $statuses)) {
+            $finalStatus = 'gagal';
+        } elseif (count(array_unique($statuses)) === 1 && $statuses[0] === 'retur') {
+            $finalStatus = 'retur';
+        } elseif (count(array_unique($statuses)) === 1 && $statuses[0] === 'sukses') {
+            $finalStatus = 'sukses';
+        } else {
+            $finalStatus = 'proses'; // fallback jika campuran status lainnya
+        }
+
+        DB::table('transaksis')->where('id', $transaksiId)->update([
+            'status' => $finalStatus,
+            'updated_at' => now(),
+        ]);
+
+        return back()->with('success', 'Item dan status transaksi diperbarui.');
+    }
+
+    public function kirimResi(Request $request, $id)
+    {
+        $request->validate([
+            'nomor_resi' => 'required|string|max:100',
+            'status' => 'required|in:proses,sukses,retur,gagal',
+        ]);
+
+        DB::table('transaksi_items')
+            ->where('transaksi_id', $id)
+            ->update([
+                'nomor_resi' => $request->nomor_resi,
+                'status' => $request->status,
+                'updated_at' => now(),
+            ]);
+
+        return back()->with('success', 'Resi dan status berhasil diperbarui.');
     }
 
     public function store(Request $request)
@@ -93,14 +158,28 @@ class TransaksiController extends Controller
             'va_number' => $vaNumber,
             'expired_at' => $expiredAt,
             'total' => $validated['total'],
-            'items' => json_encode($validated['items']),
         ]);
 
-        // ✅ Kirim email
+        foreach ($validated['items'] as $item) {
+            for ($i = 0; $i < $item['jumlah']; $i++) {
+                DB::table('transaksi_items')->insert([
+                    'transaksi_id' => $transaksi->id,
+                    'nama_produk' => $item['nama_produk'],
+                    'ukuran' => $item['ukuran'] ?? null,
+                    'jumlah' => 1, // 1 per baris
+                    'harga' => $item['harga'],
+                    'serial_number' => 'SN' . strtoupper(Str::random(8)),
+                    'status' => 'pending',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+
         try {
             Mail::to($validated['email'])->send(new VirtualAccountEmail($transaksi));
         } catch (\Exception $e) {
-            \Log::error("Gagal kirim email: " . $e->getMessage());
+            \Log::error("Gagal kirim email VA: " . $e->getMessage());
         }
 
         return response()->json([
@@ -109,5 +188,4 @@ class TransaksiController extends Controller
             'expired_at' => $expiredAt->toDateTimeString()
         ]);
     }
-
 }
