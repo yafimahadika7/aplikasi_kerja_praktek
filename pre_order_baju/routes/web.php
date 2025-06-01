@@ -27,8 +27,10 @@ use App\Models\Transaksi;
 use App\Exports\TransaksiExport;
 use Maatwebsite\Excel\Facades\Excel;
 
+Route::get('/', fn() => view('company'))->name('beranda');
+
 // ✅ Landing Page
-Route::get('/', fn() => view('welcome'));
+Route::get('/welcome', fn() => view('welcome'));
 
 // ✅ Redirect user sesuai role ke /admin/dashboard
 Route::get('/redirect', function () {

@@ -86,28 +86,33 @@ class TransaksiController extends Controller
             'updated_at' => now(),
         ]);
 
+        // Ambil transaksi_id dari item
         $transaksiId = DB::table('transaksi_items')->where('id', $itemId)->value('transaksi_id');
 
+        // Ambil semua status item untuk transaksi tersebut
         $statuses = DB::table('transaksi_items')
             ->where('transaksi_id', $transaksiId)
             ->pluck('status')
             ->toArray();
 
-        // Cek status dengan prioritas
-        if (in_array('pending', $statuses)) {
+        $uniqueStatuses = array_unique($statuses);
+
+        // Tentukan final status berdasarkan prioritas
+        if (in_array('pending', $uniqueStatuses)) {
             $finalStatus = 'pending';
-        } elseif (in_array('proses', $statuses)) {
+        } elseif (in_array('proses', $uniqueStatuses)) {
             $finalStatus = 'proses';
-        } elseif (in_array('gagal', $statuses)) {
+        } elseif (in_array('gagal', $uniqueStatuses)) {
             $finalStatus = 'gagal';
-        } elseif (count(array_unique($statuses)) === 1 && $statuses[0] === 'retur') {
+        } elseif (count($uniqueStatuses) === 1 && $uniqueStatuses[0] === 'retur') {
             $finalStatus = 'retur';
-        } elseif (count(array_unique($statuses)) === 1 && $statuses[0] === 'sukses') {
+        } elseif (count($uniqueStatuses) === 1 && $uniqueStatuses[0] === 'sukses') {
             $finalStatus = 'sukses';
         } else {
-            $finalStatus = 'proses'; // fallback jika campuran status lainnya
+            $finalStatus = 'proses'; // fallback jika kombinasi tidak dikenali
         }
 
+        // Update status transaksi utama
         DB::table('transaksis')->where('id', $transaksiId)->update([
             'status' => $finalStatus,
             'updated_at' => now(),

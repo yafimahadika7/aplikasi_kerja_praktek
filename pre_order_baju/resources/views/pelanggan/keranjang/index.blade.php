@@ -286,7 +286,7 @@
 
     <!-- Bubble Chat Minimized -->
     <button id="bubbleChat" class="btn btn-primary rounded-circle shadow position-fixed"
-        style="bottom: 20px; right: 20px; width: 60px; height: 60px; z-index: 9999;">
+        style="bottom: 100px; right: 20px; width: 60px; height: 60px; z-index: 9999;">
         💬
         <span id="notifCount" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
             style="font-size: 0.7rem; display: none;">
