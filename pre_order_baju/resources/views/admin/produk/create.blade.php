@@ -50,7 +50,7 @@
                 <option value="Pants">Pants</option>
                 <option value="One Set">One Set</option>
                 <option value="Prayer Set">Prayer Set</option>
-                <option value="Muslim Shirt">Muslim Shirt</option>
+                <option value="Hijab">Muslim Shirt</option>
             </select>
         </div>
 

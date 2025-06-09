@@ -233,6 +233,49 @@
         .gallery-item:hover img {
             transform: scale(1.05);
         }
+
+        @media (max-width: 767.98px) {
+            .hero-text h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero-text p {
+                font-size: 1rem;
+            }
+
+            .tentang-card {
+                padding: 1.5rem 1rem;
+            }
+
+            .layanan-card {
+                padding: 1.2rem;
+            }
+
+            .layanan-card h5 {
+                font-size: 1rem;
+            }
+
+            .layanan-card p {
+                font-size: 0.9rem;
+            }
+
+            .navbar-brand {
+                margin-left: 0 !important;
+                padding-left: 0.75rem;
+                font-size: 1.6rem;
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .gallery-item img {
+                width: 100%;
+                height: auto;
+            }
+
+            .ratio iframe {
+                height: 250px !important;
+            }
+        }
     </style>
 </head>
 
